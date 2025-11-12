@@ -126,6 +126,7 @@
     <ClCompile Include="interface.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <Text Include="Home.txt" />
     <Text Include="Utterances.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
