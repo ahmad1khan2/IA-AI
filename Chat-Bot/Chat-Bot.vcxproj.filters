@@ -23,4 +23,9 @@
     <Text Include="Utterances.txt" />
     <Text Include="Home.txt" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="loan.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
 </Project>
