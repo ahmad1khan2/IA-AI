@@ -165,7 +165,7 @@ void mainChat() {
                 inputForMatching[k] = tolower(inputForMatching[k]);
             }
         }
-
+        
         if (inputForMatching == "X") {
             cout << "Chatbot: Goodbye!" << endl;
             break;

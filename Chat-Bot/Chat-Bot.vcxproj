@@ -123,6 +123,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="applicant.cpp" />
     <ClCompile Include="interface.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -130,6 +131,7 @@
     <Text Include="Utterances.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="applicant.h" />
     <ClInclude Include="loan.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
