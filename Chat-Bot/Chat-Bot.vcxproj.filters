@@ -18,6 +18,9 @@
     <ClCompile Include="interface.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="applicant.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="Utterances.txt" />
@@ -25,6 +28,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="loan.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="applicant.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
