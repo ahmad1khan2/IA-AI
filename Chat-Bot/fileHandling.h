@@ -27,6 +27,9 @@ public:
     static vector<scooterLoan> readScooter();
     static vector<carLoan> readCar();
     static vector<Loan*> readAllLoans();
+
+    // Cleanup function for dynamically allocated loans
+    static void cleanupLoans(vector<Loan*>& loans);
 };
 
 #endif // FILEHANDLING_H
