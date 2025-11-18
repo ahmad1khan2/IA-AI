@@ -1,6 +1,9 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <iomanip>
+
+
 
 using namespace std;
 
@@ -165,7 +168,7 @@ void mainChat() {
                 inputForMatching[k] = tolower(inputForMatching[k]);
             }
         }
-        
+
         if (inputForMatching == "X") {
             cout << "Chatbot: Goodbye!" << endl;
             break;
@@ -207,7 +210,6 @@ void mainChat() {
             }
         }
         else if (chatState == "home_loan_area") {
-
             bool isValidOption = (inputForMatching == "1" || inputForMatching == "2" || inputForMatching == "3" || inputForMatching == "4");
 
             if (!isValidOption) {
@@ -288,20 +290,85 @@ void mainChat() {
             }
             else {
                 int selectedIndex = -1;
-                // --- We still use stoi here because the *user's input*
-                // (like "1" or "2") won't have commas. ---
                 try {
                     selectedIndex = stoi(inputForMatching) - 1;
                 }
                 catch (...) {}
 
                 if (selectedIndex >= 0 && selectedIndex < currentOptionsCount) {
-                    calculateInstallment(
-                        currentOptionsSize[selectedIndex],
-                        currentOptionsPrice[selectedIndex],
-                        currentOptionsDownPayment[selectedIndex],
-                        currentOptionsMonths[selectedIndex]
-                    );
+                    // Helper function to remove commas and convert to integer
+                    auto parseFormattedNumber = [](const string& str) -> int {
+                        string cleanStr = "";
+                        for (char c : str) {
+                            if (c >= '0' && c <= '9') {
+                                cleanStr += c;
+                            }
+                        }
+                        try {
+                            return stoi(cleanStr);
+                        }
+                        catch (...) {
+                            return 0;
+                        }
+                        };
+
+                    // Get loan details and parse formatted numbers
+                    string size = currentOptionsSize[selectedIndex];
+                    int price = parseFormattedNumber(currentOptionsPrice[selectedIndex]);
+                    int downPayment = parseFormattedNumber(currentOptionsDownPayment[selectedIndex]);
+                    int months = stoi(currentOptionsMonths[selectedIndex]);
+
+                    // Calculate monthly installment
+                    double monthlyInstallment = (price - downPayment) / (double)months;
+
+                    // Print complete tabular loan installment plan
+                    cout << "\n" << string(70, '=') << endl;
+                    cout << "COMPREHENSIVE LOAN INSTALLMENT PLAN" << endl;
+                    cout << string(70, '=') << endl;
+                    cout << "Property Size: " << size << endl;
+                    cout << "Total Price: $" << price << endl;
+                    cout << "Down Payment: $" << downPayment << endl;
+                    cout << "Loan Amount: $" << (price - downPayment) << endl;
+                    cout << "Loan Term: " << months << " months" << endl;
+                    cout << "Monthly Installment: $" << fixed << setprecision(2) << monthlyInstallment << endl;
+                    cout << string(70, '-') << endl;
+
+                    // Table header
+                    cout << setw(8) << "Month"
+                        << setw(15) << "Installment"
+                        << setw(20) << "Principal Paid"
+                        << setw(20) << "Remaining Balance" << endl;
+                    cout << string(70, '-') << endl;
+
+                    // Calculate and display each month's details
+                    double remainingBalance = price - downPayment;
+                    double totalPaid = downPayment;
+
+                    for (int month = 1; month <= months; month++) {
+                        double principalThisMonth = monthlyInstallment;
+                        remainingBalance -= principalThisMonth;
+                        totalPaid += principalThisMonth;
+
+                        // Handle rounding in the last month
+                        if (month == months) {
+                            principalThisMonth = remainingBalance + principalThisMonth;
+                            remainingBalance = 0;
+                        }
+
+                        cout << setw(8) << month
+                            << setw(15) << fixed << setprecision(2) << monthlyInstallment
+                            << setw(20) << fixed << setprecision(2) << principalThisMonth
+                            << setw(20) << fixed << setprecision(2) << (remainingBalance > 0 ? remainingBalance : 0)
+                            << endl;
+                    }
+
+                    cout << string(70, '=') << endl;
+                    cout << "Total Amount Paid: $" << fixed << setprecision(2) << totalPaid << endl;
+                    cout << "Total Interest: $" << fixed << setprecision(2) << (totalPaid - price) << endl;
+                    cout << string(70, '=') << endl;
+
+                    cout << "\nChatbot: This completes your loan installment plan. ";
+                    cout << "Press A if you want to apply for another loan. Press X to exit." << endl;
                     chatState = "main";
                 }
                 else {
