@@ -235,3 +235,52 @@ void Applicant::addExistingLoan(string status, string total, string returned, st
     ExistingLoan loan(status, total, returned, due, bank, category);
     existingLoans.push_back(loan);
 }
+
+// searching count through CNIC
+void countApplicationsByCNIC(string cnic) {
+    ifstream file("applications.txt");
+    if (!file) {
+        cout << "Error: applications.txt not found!" << endl;
+        return;
+    }
+
+    string line;
+    int submitted = 0;
+    int approved = 0;
+    int rejected = 0;
+
+    while (getline(file, line)) {
+       // Split by #
+        string fields[40];
+        int idx = 0;
+        string temp = "";
+
+        for (int i = 0; i < line.length(); i++) {
+            if (line[i] == '#') {
+                fields[idx++] = temp;
+                temp = "";
+            }
+            else {
+                temp += line[i];
+            }
+        }
+        fields[idx] = temp; // last one
+
+        // CNIC is in index 6
+        if (fields[6] == cnic) {
+            submitted++;
+
+            string status = fields[31];  // last field
+
+            if (status == "approved" || status == "Approved")
+                approved++;
+            else if (status == "rejected" || status == "Rejected")
+                rejected++;
+        }
+    }
+
+    cout << "\n--- Application Count for CNIC: " << cnic << " ---\n";
+    cout << "Submitted: " << submitted << endl;
+    cout << "Approved:  " << approved << endl;
+    cout << "Rejected:  " << rejected << endl;
+}
