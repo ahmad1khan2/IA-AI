@@ -124,22 +124,29 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="applicant.cpp" />
+    <ClCompile Include="cnic.cpp" />
+    <ClCompile Include="Car.cpp" />
     <ClCompile Include="fileHandling.cpp" />
     <ClCompile Include="home.cpp" />
     <ClCompile Include="interface.cpp" />
-    <ClCompile Include="test.cpp" />
+    <ClCompile Include="Scooter.cpp" />
+    <ClCompile Include="LenderInterface.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="Car.txt" />
-    <Text Include="Home.txt" />
-    <Text Include="Scooter.txt" />
+    <Text Include="..\..\..\..\..\Car.txt" />
+    <Text Include="..\..\..\..\..\Home.txt" />
+    <Text Include="..\..\..\..\..\Scooter.txt" />
+    <Text Include="applications.txt" />
     <Text Include="Utterances.txt" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="applicant.h" />
+    <ClInclude Include="cnic.h" />
+    <ClInclude Include="Car.h" />
     <ClInclude Include="fileHandling.h" />
     <ClInclude Include="home.h" />
     <ClInclude Include="loan.h" />
+    <ClInclude Include="Scooter.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
