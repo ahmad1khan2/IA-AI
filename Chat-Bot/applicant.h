@@ -63,10 +63,54 @@ public:
     string salarySlipPath;
     void handleImageUpload();
     bool copyFile(const string& sourcePath, const string& destPath);
+
 private:
     string generateApplicationId();
     bool saveToFile();
     void showApplicationSummary();
 };
+
+// ============================
+// INPUT VALIDATION FUNCTIONS DECLARATIONS
+// ============================
+
+// Helper function to check if string contains only digits
+bool containsOnlyDigits(const string& str);
+
+// Helper function to check email format
+bool isValidEmail(const string& email);
+
+// Helper function to validate date format DD-MM-YYYY
+bool isValidDate(const string& date);
+
+// CNIC validation - 13 digits without dashes
+bool isValidCNIC(const string& cnic);
+
+// Phone number validation - 11 digits
+bool isValidPhone(const string& phone);
+
+// Numeric validation for income and bills
+bool isValidNumeric(const string& num);
+
+// Employment status validation
+bool isValidEmploymentStatus(const string& status);
+
+// Marital status validation  
+bool isValidMaritalStatus(const string& status);
+
+// Loan status validation
+bool isValidLoanStatus(const string& status);
+
+// Loan category validation
+bool isValidLoanCategory(const string& category);
+
+// Name validation (only letters and spaces)
+bool isValidName(const string& name);
+
+// Postal code validation - 5 digits
+bool isValidPostalCode(const string& postalCode);
+
+// searching count through CNIC
+void countApplicationsByCNIC(string cnic);
 
 #endif
