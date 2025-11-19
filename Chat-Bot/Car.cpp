@@ -167,7 +167,12 @@ void CarLoanHandler::handleApplyState() {
     cout << "\n=== STARTING CAR LOAN APPLICATION PROCESS ===" << endl;
     Applicant applicant;
     applicant.collectData();
-    cout << "Chatbot: Application process completed. Press C for another car loan or X to exit." << endl;
+    if (!applicant.applicationId.empty()) {
+        cout << "Chatbot: Application process completed. Press C for another Car loan or X to exit." << endl;
+    }
+    else {
+        cout << "Press C to try again or X to exit." << endl;
+    }
     chatState = "main";
 }
 

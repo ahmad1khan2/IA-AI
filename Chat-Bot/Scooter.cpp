@@ -126,7 +126,12 @@ void ScooterLoanHandler::handleApplyState() {
     Applicant applicant;
     applicant.collectData();
 
-    cout << "Chatbot: Application process completed. Press S for another scooter loan or X to exit." << endl;
+    if (!applicant.applicationId.empty()) {
+        cout << "Chatbot: Application process completed. Press S for another Scooter loan or X to exit." << endl;
+    }
+    else {
+        cout << "Press S to try again or X to exit." << endl;
+    }
     chatState = "main";
 }
 
