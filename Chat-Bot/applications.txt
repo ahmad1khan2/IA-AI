@@ -1,1 +1,2 @@
-1001#Adina Saqib#Saqib#53024#03244462728#adina@gmail.com#34222324445432#11-02-2029#self employed#single#female#2#200000#2334221#2222#No#No#No#No#No#No#aliza#73383292#11-11-2030#0324689638#aliza@gmail.com#mustafa#282828737#22-09-2031#034562781811#mustafa@gmail.com#rejected
+1001#Adina Saqib#Saqib#53024#03244462728#adina@gmail.com#3422232444543#11-02-2029#self employed#single#female#2#200000#2334221#2222#No#No#No#No#No#No#aliza#73383292#11-11-2030#0324689638#aliza@gmail.com#mustafa#282828737#22-09-2031#034562781811#mustafa@gmail.com#submitted
+1001#test#t#t#t#t#t#t#t#t#t#t#t#t#t#No#No#No#No#No#No#t#t#t#t#t#t#t#t#t#t#./data/1001/cnic_front.jpg#./data/1001/cnic_back.jpg#./data/1001/electricity_bill.jpg#./data/1001/salary_slip.jpg#submitted
