@@ -57,7 +57,12 @@ public:
     void collectData();
     void addExistingLoan(string status, string total, string returned, string due, string bank, string category);
     string toFileString();
-
+    string cnicFrontPath;
+    string cnicBackPath;
+    string electricityBillPath;
+    string salarySlipPath;
+    void handleImageUpload();
+    bool copyFile(const string& sourcePath, const string& destPath);
 private:
     string generateApplicationId();
     bool saveToFile();

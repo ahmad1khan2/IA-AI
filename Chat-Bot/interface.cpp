@@ -170,7 +170,7 @@ void mainChat() {
             cout << "Chatbot: Goodbye!" << endl;
             break;
         }
-
+      
         if (chatState == "main") {
             bool found = false;
             for (int i = 0; i < utteranceCount; i++) {
