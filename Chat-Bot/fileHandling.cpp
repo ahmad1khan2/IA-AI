@@ -13,7 +13,14 @@ int Parser::carCount = 0;
 // Helper function implementations
 int Parser::stoiSafe(const string& str) {
     try {
-        return stoi(str);
+        // Remove commas from the string before conversion
+        string cleanedStr;
+        for (char c : str) {
+            if (c != ',') {
+                cleanedStr += c;
+            }
+        }
+        return stoi(cleanedStr);
     }
     catch (...) {
         return 0;
@@ -22,7 +29,14 @@ int Parser::stoiSafe(const string& str) {
 
 double Parser::stodSafe(const string& str) {
     try {
-        return stod(str);
+        // Remove commas from the string before conversion
+        string cleanedStr;
+        for (char c : str) {
+            if (c != ',') {
+                cleanedStr += c;
+            }
+        }
+        return stod(cleanedStr);
     }
     catch (...) {
         return 0.0;
