@@ -128,7 +128,9 @@
     <ClCompile Include="interface.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="Home.txt" />
+    <Text Include="..\..\..\..\..\Car.txt" />
+    <Text Include="..\..\..\..\..\Home.txt" />
+    <Text Include="..\..\..\..\..\Scooter.txt" />
     <Text Include="Utterances.txt" />
   </ItemGroup>
   <ItemGroup>
