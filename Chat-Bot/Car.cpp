@@ -190,10 +190,3 @@ int CarLoanHandler::parseFormattedNumber(const string& str) {
 string CarLoanHandler::boolToYesNo(bool v) const {
     return v ? "Yes" : "No";
 }
-
-
-int main() {
-    CarLoanHandler handler;
-    handler.runCar();
-    return 0;
-}

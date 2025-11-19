@@ -2,7 +2,7 @@
 
 
 // Check if CNIC contains exactly 13 digits
-bool isValidCNIC(const string& cnic) {
+bool isvalidCNIC(const string& cnic) {
     if (cnic.length() != 13) return false;
     for (char c : cnic) {
         if (!isdigit(c)) return false;
@@ -66,7 +66,7 @@ void queryApplicationsByCNIC() {
         cout << "Enter CNIC to query (13 digits, without dashes): ";
         getline(cin, cnic);
 
-        if (isValidCNIC(cnic)) {
+        if (isvalidCNIC(cnic)) {
             break;
         }
         else {
