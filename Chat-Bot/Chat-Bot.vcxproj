@@ -125,18 +125,22 @@
   <ItemGroup>
     <ClCompile Include="applicant.cpp" />
     <ClCompile Include="cnic.cpp" />
+    <ClCompile Include="Car.cpp" />
     <ClCompile Include="fileHandling.cpp" />
     <ClCompile Include="interface.cpp" />
+    <ClCompile Include="LenderInterface.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\..\..\..\..\Car.txt" />
     <Text Include="..\..\..\..\..\Home.txt" />
     <Text Include="..\..\..\..\..\Scooter.txt" />
+    <Text Include="applications.txt" />
     <Text Include="Utterances.txt" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="applicant.h" />
     <ClInclude Include="cnic.h" />
+    <ClInclude Include="Car.h" />
     <ClInclude Include="fileHandling.h" />
     <ClInclude Include="loan.h" />
   </ItemGroup>
