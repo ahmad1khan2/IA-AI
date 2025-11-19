@@ -83,6 +83,12 @@ void ScooterLoanHandler::handleApplyState(int loanIndex) {
     Applicant applicant;
     applicant.collectData();
 
+    if (!applicant.applicationId.empty()) {
+        cout << "Chatbot: Application process completed. Press S for another Scooter loan or X to exit." << endl;
+    }
+    else {
+        cout << "Press S to try again or X to exit." << endl;
+    }
     // Automatically ask for starting month after application
     cout << "\nChatbot: Enter starting month for installment plan (1-12): ";
     int startMonth;

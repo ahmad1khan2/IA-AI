@@ -154,6 +154,13 @@ void CarLoanHandler::handleApplyState(int selectedIndex) {
     Applicant applicant;
     applicant.collectData();
 
+    if (!applicant.applicationId.empty()) {
+        cout << "Chatbot: Application process completed. Press C for another Car loan or X to exit." << endl;
+    }
+    else {
+        cout << "Press C to try again or X to exit." << endl;
+    }
+
     cout << "Chatbot: Application process completed." << endl;
 
     // Ask for starting month to view installment plan

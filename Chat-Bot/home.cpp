@@ -150,6 +150,12 @@ void HomeLoanHandler::handleApplyState(int selectedIndex) {
     Applicant applicant;
     applicant.collectData();
 
+    if (!applicant.applicationId.empty()) {
+        cout << "Chatbot: Application process completed. Press H for another home loan or X to exit." << endl;
+    }
+    else {
+        cout << "Press H to try again or X to exit." << endl;
+    }
     // Ask for starting month
     int startMonth = 1;
     cout << "Chatbot: Enter starting month for installment plan (1-12):";

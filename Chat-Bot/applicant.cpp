@@ -301,15 +301,28 @@ void Applicant::collectData() {
     if (confirm == "yes") {
         applicationId = generateApplicationId();
         handleImageUpload();
-        if (saveToFile()) {
-            cout << "Application submitted successfully! Your Application ID: " << applicationId << endl;
+
+        // Check if ALL images were uploaded successfully before saving
+        bool allImagesUploaded = (cnicFrontPath != "NOT_UPLOADED" &&
+            cnicBackPath != "NOT_UPLOADED" &&
+            electricityBillPath != "NOT_UPLOADED" &&
+            salarySlipPath != "NOT_UPLOADED");
+
+        if (allImagesUploaded) {
+            if (saveToFile()) {
+                cout << "Application submitted successfully! Your Application ID: " << applicationId << endl;
+            }
+            else {
+                cout << "Error saving application. Please try again." << endl;
+            }
         }
         else {
-            cout << "Error saving application. Please try again." << endl;
+            // Reset application ID since it wasn't successfully submitted
+            applicationId = "";
         }
     }
     else {
-        cout << "Application cancelled. Returning to main menu." << endl;
+        cout << "Application cancelled." << endl;
     }
 }
 
@@ -324,10 +337,35 @@ void Applicant::showApplicationSummary() {
 
 // generateApplicationId
 string Applicant::generateApplicationId() {
-    static int counter = 1001;
-    string id = to_string(counter);
-    counter++;
-    return id;
+    int highestId = 1000; // Default starting ID
+
+    // Find the highest existing ID from applications.txt
+    ifstream appFile("applications.txt");
+    string line;
+
+    if (appFile) {
+        while (getline(appFile, line)) {
+            if (!line.empty()) {
+                size_t pos = line.find('#');
+                if (pos != string::npos) {
+                    string idStr = line.substr(0, pos);
+                    try {
+                        int currentId = stoi(idStr);
+                        if (currentId > highestId) {
+                            highestId = currentId;
+                        }
+                    }
+                    catch (...) {
+                        // Ignore invalid IDs
+                    }
+                }
+            }
+        }
+        appFile.close();
+    }
+
+    // Return next ID
+    return to_string(highestId + 1);
 }
 
 // saveToFile
@@ -392,27 +430,27 @@ void Applicant::addExistingLoan(string status, string total, string returned, st
 // handleImageUpload
 void Applicant::handleImageUpload() {
     string imagePath;
+    bool allUploaded = true;
+    vector<string> failedUploads;
 
     cout << "\n=== IMAGE UPLOAD ===" << endl;
 
-    // Create ./data/xxxx folder using application ID (FIXED)
-    string folderPath = "./data/" + applicationId;
-#ifdef _WIN32  //windows format folder creation
-    system(("mkdir \"" + folderPath + "\"").c_str());
-#else //Linux/mac format folder creation
-    system(("mkdir -p \"" + folderPath + "\"").c_str());
-#endif
+    // Track upload results first without creating folder
+    string cnicFrontResult, cnicBackResult, electricityBillResult, salarySlipResult;
 
     // CNIC Front
     cout << "Enter path for CNIC Front image: ";
     getline(cin, imagePath);
-    // Remove quotes if user entered them
     if (!imagePath.empty() && imagePath.front() == '"' && imagePath.back() == '"') {
         imagePath = imagePath.substr(1, imagePath.length() - 2);
     }
-    cnicFrontPath = folderPath + "/cnic_front.jpg";
-    if (!copyFile(imagePath, cnicFrontPath)) {
-        cnicFrontPath = "NOT_UPLOADED";
+    if (copyFile(imagePath, "./temp_cnic_front.jpg")) {
+        cnicFrontResult = "UPLOADED";
+    }
+    else {
+        cnicFrontResult = "NOT_UPLOADED";
+        allUploaded = false;
+        failedUploads.push_back("CNIC Front");
     }
 
     // CNIC Back
@@ -421,9 +459,13 @@ void Applicant::handleImageUpload() {
     if (!imagePath.empty() && imagePath.front() == '"' && imagePath.back() == '"') {
         imagePath = imagePath.substr(1, imagePath.length() - 2);
     }
-    cnicBackPath = folderPath + "/cnic_back.jpg";
-    if (!copyFile(imagePath, cnicBackPath)) {
-        cnicBackPath = "NOT_UPLOADED";
+    if (copyFile(imagePath, "./temp_cnic_back.jpg")) {
+        cnicBackResult = "UPLOADED";
+    }
+    else {
+        cnicBackResult = "NOT_UPLOADED";
+        allUploaded = false;
+        failedUploads.push_back("CNIC Back");
     }
 
     // Electricity Bill
@@ -432,9 +474,13 @@ void Applicant::handleImageUpload() {
     if (!imagePath.empty() && imagePath.front() == '"' && imagePath.back() == '"') {
         imagePath = imagePath.substr(1, imagePath.length() - 2);
     }
-    electricityBillPath = folderPath + "/electricity_bill.jpg";
-    if (!copyFile(imagePath, electricityBillPath)) {
-        electricityBillPath = "NOT_UPLOADED";
+    if (copyFile(imagePath, "./temp_electricity_bill.jpg")) {
+        electricityBillResult = "UPLOADED";
+    }
+    else {
+        electricityBillResult = "NOT_UPLOADED";
+        allUploaded = false;
+        failedUploads.push_back("Electricity Bill");
     }
 
     // Salary Slip
@@ -443,12 +489,64 @@ void Applicant::handleImageUpload() {
     if (!imagePath.empty() && imagePath.front() == '"' && imagePath.back() == '"') {
         imagePath = imagePath.substr(1, imagePath.length() - 2);
     }
-    salarySlipPath = folderPath + "/salary_slip.jpg";
-    if (!copyFile(imagePath, salarySlipPath)) {
-        salarySlipPath = "NOT_UPLOADED";
+    if (copyFile(imagePath, "./temp_salary_slip.jpg")) {
+        salarySlipResult = "UPLOADED";
+    }
+    else {
+        salarySlipResult = "NOT_UPLOADED";
+        allUploaded = false;
+        failedUploads.push_back("Salary Slip");
     }
 
-    cout << "Image upload completed!" << endl;
+    // Only create folder and move files if ALL uploads were successful
+    if (allUploaded) {
+        // Create the folder
+        string folderPath = "./data/" + applicationId;
+#ifdef _WIN32
+        system(("mkdir \"" + folderPath + "\"").c_str());
+#else
+        system(("mkdir -p \"" + folderPath + "\"").c_str());
+#endif
+
+        // Move temp files to final location
+        cnicFrontPath = folderPath + "/cnic_front.jpg";
+        cnicBackPath = folderPath + "/cnic_back.jpg";
+        electricityBillPath = folderPath + "/electricity_bill.jpg";
+        salarySlipPath = folderPath + "/salary_slip.jpg";
+
+        copyFile("./temp_cnic_front.jpg", cnicFrontPath);
+        copyFile("./temp_cnic_back.jpg", cnicBackPath);
+        copyFile("./temp_electricity_bill.jpg", electricityBillPath);
+        copyFile("./temp_salary_slip.jpg", salarySlipPath);
+
+        // Clean up temp files
+        remove("./temp_cnic_front.jpg");
+        remove("./temp_cnic_back.jpg");
+        remove("./temp_electricity_bill.jpg");
+        remove("./temp_salary_slip.jpg");
+
+        cout << "All images uploaded successfully! Application submitted." << endl;
+    }
+    else {
+        // Set paths to NOT_UPLOADED
+        cnicFrontPath = "NOT_UPLOADED";
+        cnicBackPath = "NOT_UPLOADED";
+        electricityBillPath = "NOT_UPLOADED";
+        salarySlipPath = "NOT_UPLOADED";
+
+        // Clean up any temp files that were created
+        remove("./temp_cnic_front.jpg");
+        remove("./temp_cnic_back.jpg");
+        remove("./temp_electricity_bill.jpg");
+        remove("./temp_salary_slip.jpg");
+
+        cout << "\nIMAGE UPLOAD FAILED!" << endl;
+        cout << "The following documents were not uploaded correctly:" << endl;
+        for (const auto& doc : failedUploads) {
+            cout << "  - " << doc << endl;
+        }
+        cout << "\nPlease submit your application again or return to main menu." << endl;
+    }
 }
 // copyFile - HELPER FUNCTION
 bool Applicant::copyFile(const string& sourcePath, const string& destPath) {
@@ -523,16 +621,20 @@ bool isValidNumeric(const string& num) {
     return !num.empty() && containsOnlyDigits(num);
 }
 
-// Employment status validation
+// Employment status validation - CASE INSENSITIVE
 bool isValidEmploymentStatus(const string& status) {
-    return status == "Self-employed" || status == "salaried" ||
-        status == "retired" || status == "unemployed";
+    string lowerStatus = status;
+    for (char& c : lowerStatus) c = tolower(c);
+    return lowerStatus == "self-employed" || lowerStatus == "salaried" ||
+        lowerStatus == "retired" || lowerStatus == "unemployed";
 }
 
-// Marital status validation  
+// Marital status validation - CASE INSENSITIVE  
 bool isValidMaritalStatus(const string& status) {
-    return status == "Single" || status == "Married" ||
-        status == "Divorced" || status == "Widowed";
+    string lowerStatus = status;
+    for (char& c : lowerStatus) c = tolower(c);
+    return lowerStatus == "single" || lowerStatus == "married" ||
+        lowerStatus == "divorced" || lowerStatus == "widowed";
 }
 
 // Loan status validation
