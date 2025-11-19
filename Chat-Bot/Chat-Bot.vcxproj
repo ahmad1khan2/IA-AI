@@ -124,6 +124,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="applicant.cpp" />
+    <ClCompile Include="cnic.cpp" />
     <ClCompile Include="fileHandling.cpp" />
     <ClCompile Include="interface.cpp" />
   </ItemGroup>
@@ -135,6 +136,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="applicant.h" />
+    <ClInclude Include="cnic.h" />
     <ClInclude Include="fileHandling.h" />
     <ClInclude Include="loan.h" />
   </ItemGroup>

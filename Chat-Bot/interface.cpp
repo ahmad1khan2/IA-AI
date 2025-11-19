@@ -2,7 +2,7 @@
 #include <fstream>
 #include <string>
 #include <iomanip>
-
+#include "cnic.h"
 
 
 using namespace std;
@@ -176,6 +176,10 @@ void mainChat() {
       
         if (chatState == "main") {
             bool found = false;
+            if (inputForMatching == "C") {
+                queryApplicationsByCNIC();
+                found = true;
+            }
             for (int i = 0; i < utteranceCount; i++) {
                 string tempUser = userInput[i];
                 if (tempUser.length() == 1) {
@@ -384,8 +388,10 @@ void mainChat() {
 
 // --- Main ---
 int main() {
+    
     fileHandling();
     mainChat();
+
     return 0;
 }//hello
 //yo
