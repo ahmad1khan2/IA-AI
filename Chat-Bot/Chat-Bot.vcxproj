@@ -127,6 +127,7 @@
     <ClCompile Include="cnic.cpp" />
     <ClCompile Include="Car.cpp" />
     <ClCompile Include="fileHandling.cpp" />
+    <ClCompile Include="home.cpp" />
     <ClCompile Include="interface.cpp" />
     <ClCompile Include="Scooter.cpp" />
     <ClCompile Include="LenderInterface.cpp" />
@@ -143,6 +144,7 @@
     <ClInclude Include="cnic.h" />
     <ClInclude Include="Car.h" />
     <ClInclude Include="fileHandling.h" />
+    <ClInclude Include="home.h" />
     <ClInclude Include="loan.h" />
     <ClInclude Include="Scooter.h" />
   </ItemGroup>

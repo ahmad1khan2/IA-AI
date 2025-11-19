@@ -24,10 +24,24 @@
     <ClCompile Include="fileHandling.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="home.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="Utterances.txt" />
-    <Text Include="Home.txt" />
+    <Text Include="Car.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+    <Text Include="Home.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+    <Text Include="Scooter.txt">
+      <Filter>Source Files</Filter>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="loan.h">
@@ -37,6 +51,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="fileHandling.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="home.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
