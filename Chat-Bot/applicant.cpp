@@ -555,6 +555,7 @@ bool isValidName(const string& name) {
 // Postal code validation - 5 digits
 bool isValidPostalCode(const string& postalCode) {
     return postalCode.length() == 5 && containsOnlyDigits(postalCode);
+}
 
 // searching count through CNIC
 void countApplicationsByCNIC(string cnic) {
