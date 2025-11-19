@@ -9,6 +9,7 @@ using namespace std;
 HomeLoanHandler::HomeLoanHandler()
     : chatState("main"), homeLoanAttempt(0), currentOptionsCount(0) {
     homeLoans = Parser::readHome();
+    cout << "Debug: Loaded " << homeLoans.size() << " home loans" << endl; // Debug line
 }
 
 void HomeLoanHandler::runHome() {
@@ -48,9 +49,14 @@ void HomeLoanHandler::runHome() {
 
 void HomeLoanHandler::handleMainState(const string& input) {
     if (input == "H") {
-        cout << "Chatbot: You are applying for a home loan. Please select area. Options are 1, 2, 3, 4" << endl;
-        chatState = "home_loan_area";
-        homeLoanAttempt = 0;
+        if (homeLoans.empty()) {
+            cout << "Chatbot: Sorry, no home loan options are currently available. Please try another loan type or check back later." << endl;
+        }
+        else {
+            cout << "Chatbot: You are applying for a home loan. Please select area. Options are 1, 2, 3, 4" << endl;
+            chatState = "home_loan_area";
+            homeLoanAttempt = 0;
+        }
     }
     else {
         cout << "Chatbot: Please press H for home loan or X to exit." << endl;
@@ -71,6 +77,10 @@ void HomeLoanHandler::handleSelectState(const string& input) {
     if (input == "B") {
         cout << "Chatbot: Returning to main menu. Please press H for home loan. Press X to exit." << endl;
         chatState = "main";
+    }
+    else if (input == "A") {
+        // Apply for loan - start application process
+        handleApplyState();
     }
     else {
         int selectedIndex = -1;
@@ -95,7 +105,7 @@ void HomeLoanHandler::handleSelectState(const string& input) {
                 handleApplyState();
             }
             else {
-                cout << "Chatbot: Returning to main menu. Press H for home loan. Press X to exit." << endl;
+                cout << "Chatbot: Press H for another home loan or X to exit." << endl;
                 chatState = "main";
             }
         }
@@ -112,7 +122,7 @@ void HomeLoanHandler::handleApplyState() {
     Applicant applicant;
     applicant.collectData();
 
-    cout << "Chatbot: Application process completed. Returning to main menu." << endl;
+    cout << "Chatbot: Application process completed. Press H for another home loan or X to exit." << endl;
     chatState = "main";
 }
 
@@ -124,9 +134,11 @@ void HomeLoanHandler::displayHomeLoanOptions(const string& targetArea) {
     currentOptionsDownPayment.clear();
     currentOptionsMonths.clear();
 
+    // Convert target area to integer for comparison
+    int targetAreaNum = stoi(targetArea.substr(5)); // Extract number from "Area X"
+
     for (const auto& loan : homeLoans) {
-        string areaStr = "Area " + to_string(loan.getArea());
-        if (areaStr == targetArea) {
+        if (loan.getArea() == targetAreaNum) {
             if (!foundOptions) {
                 cout << "Chatbot: Here are the options for " << targetArea << ":" << endl;
                 foundOptions = true;
@@ -175,60 +187,29 @@ void HomeLoanHandler::displayHomeLoanOptions(const string& targetArea) {
 }
 
 void HomeLoanHandler::displayInstallmentPlan(int selectedIndex) {
-    // Get loan details and parse formatted numbers
-    string size = currentOptionsSize[selectedIndex];
-    int price = parseFormattedNumber(currentOptionsPrice[selectedIndex]);
-    int downPayment = parseFormattedNumber(currentOptionsDownPayment[selectedIndex]);
-    int months = stoi(currentOptionsMonths[selectedIndex]);
+    // Find the matching homeLoan object using the area and stored vectors
+     // We need to reconstruct which area we were searching for
+    string targetArea = "Area "; // We'll need to track this from the previous state
 
-    // Calculate monthly installment
-    double monthlyInstallment = (price - downPayment) / static_cast<double>(months);
+    // Since we don't have the area stored, we'll search through all homeLoans
+    // to find one that matches all the criteria from our stored vectors
+    for (auto& loan : homeLoans) {
+        string size = currentOptionsSize[selectedIndex];
+        int price = stoi(currentOptionsPrice[selectedIndex]);
+        int downPayment = stoi(currentOptionsDownPayment[selectedIndex]);
+        int months = stoi(currentOptionsMonths[selectedIndex]);
 
-    // Print complete tabular loan installment plan
-    cout << "\n" << string(70, '=') << endl;
-    cout << "COMPREHENSIVE LOAN INSTALLMENT PLAN" << endl;
-    cout << string(70, '=') << endl;
-    cout << "Property Size: " << size << endl;
-    cout << "Total Price: $" << price << endl;
-    cout << "Down Payment: $" << downPayment << endl;
-    cout << "Loan Amount: $" << (price - downPayment) << endl;
-    cout << "Loan Term: " << months << " months" << endl;
-    cout << "Monthly Installment: $" << fixed << setprecision(2) << monthlyInstallment << endl;
-    cout << string(70, '-') << endl;
+        if (loan.getSize() == size &&
+            loan.getPrice() == price &&
+            loan.getDownPayment() == downPayment &&
+            loan.getInstallments() == months) {
 
-    // Table header
-    cout << setw(8) << "Month"
-        << setw(15) << "Installment"
-        << setw(20) << "Principal Paid"
-        << setw(20) << "Remaining Balance" << endl;
-    cout << string(70, '-') << endl;
-
-    // Calculate and display each month's details
-    double remainingBalance = price - downPayment;
-    double totalPaid = downPayment;
-
-    for (int month = 1; month <= months; month++) {
-        double principalThisMonth = monthlyInstallment;
-        remainingBalance -= principalThisMonth;
-        totalPaid += principalThisMonth;
-
-        // Handle rounding in the last month
-        if (month == months) {
-            principalThisMonth = remainingBalance + principalThisMonth;
-            remainingBalance = 0;
+            // Use the existing method from Loan class to print installment plan
+            cout << "\n=== DETAILED INSTALLMENT PLAN ===" << endl;
+            loan.printInstallmentPlan();
+            return;
         }
-
-        cout << setw(8) << month
-            << setw(15) << fixed << setprecision(2) << monthlyInstallment
-            << setw(20) << fixed << setprecision(2) << principalThisMonth
-            << setw(20) << fixed << setprecision(2) << (remainingBalance > 0 ? remainingBalance : 0)
-            << endl;
     }
-
-    cout << string(70, '=') << endl;
-    cout << "Total Amount Paid: $" << fixed << setprecision(2) << totalPaid << endl;
-    cout << "Total Interest: $" << fixed << setprecision(2) << (totalPaid - price) << endl;
-    cout << string(70, '=') << endl;
 }
 
 int HomeLoanHandler::parseFormattedNumber(const string& str) {

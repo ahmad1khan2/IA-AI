@@ -69,4 +69,16 @@ private:
     void showApplicationSummary();
 };
 
+bool isValidCNIC(const std::string& cnic);
+bool isValidDate(const std::string& date);
+bool isValidEmail(const std::string& email);
+bool isValidEmploymentStatus(const std::string& status);
+bool isValidLoanCategory(const std::string& category);
+bool isValidLoanStatus(const std::string& status);
+bool isValidMaritalStatus(const std::string& status);
+bool isValidName(const std::string& name);
+bool isValidNumeric(const std::string& num);
+bool isValidPhone(const std::string& phone);
+bool isValidPostalCode(const std::string& postalCode);
+
 #endif
