@@ -2,7 +2,6 @@
 #include "applicant.h"
 #include <iostream>
 #include <iomanip>
-#include <sstream>
 #include <algorithm>
 
 using namespace std;
@@ -20,61 +19,39 @@ void ScooterLoanHandler::runScooter() {
     while (true) {
         cout << "You: ";
         getline(cin, input);
-
         string inputForMatching = input;
-        if (inputForMatching.length() == 1) {
+        if (inputForMatching.length() == 1)
             inputForMatching[0] = toupper(inputForMatching[0]);
-        }
-        else {
-            for (int k = 0; k < inputForMatching.length(); k++) {
-                inputForMatching[k] = tolower(inputForMatching[k]);
-            }
-        }
+        else
+            transform(inputForMatching.begin(), inputForMatching.end(), inputForMatching.begin(), ::tolower);
 
         if (inputForMatching == "X") {
             cout << "Chatbot: Goodbye!" << endl;
             break;
         }
 
-        if (chatState == "main") {
-            handleMainState(inputForMatching);
-        }
-        else if (chatState == "scooter_loan_make") {
-            handleMakeState(inputForMatching);
-        }
-        else if (chatState == "scooter_loan_model") {
-            handleModelState(inputForMatching);
-        }
+        if (chatState == "main") handleMainState(inputForMatching);
+        else if (chatState == "scooter_loan_make") handleMakeState(inputForMatching);
+        else if (chatState == "scooter_loan_model") handleModelState(inputForMatching);
     }
 }
 
 void ScooterLoanHandler::handleMainState(const string& input) {
     if (input == "S") {
-        if (scooterLoans.empty()) {
-            cout << "Chatbot: Sorry, no scooter loan options are currently available. Please try another loan type or check back later." << endl;
-        }
+        if (scooterLoans.empty())
+            cout << "Chatbot: Sorry, no scooter loan options are currently available." << endl;
         else {
             displayScooterMakes();
             chatState = "scooter_loan_make";
             scooterLoanAttempt = 0;
         }
     }
-    else {
-        cout << "Chatbot: Please press S for scooter loan or X to exit." << endl;
-    }
+    else cout << "Chatbot: Please press S for scooter loan or X to exit." << endl;
 }
 
 void ScooterLoanHandler::handleMakeState(const string& input) {
-    if (input == "B") {
-        cout << "Chatbot: Returning to main menu. Please press S for scooter loan. Press X to exit." << endl;
-        chatState = "main";
-        return;
-    }
-
-    if (!isValidMakeOption(input)) {
-        cout << "Chatbot: That is not a valid option. Please select from the available makes. Press B to go back or X to exit." << endl;
-        return;
-    }
+    if (input == "B") { chatState = "main"; return; }
+    if (!isValidMakeOption(input)) { cout << "Invalid make option.\n"; return; }
 
     int selectedMakeIndex = stoi(input) - 1;
     string selectedMake = getAvailableMakes()[selectedMakeIndex];
@@ -82,46 +59,26 @@ void ScooterLoanHandler::handleMakeState(const string& input) {
 }
 
 void ScooterLoanHandler::handleModelState(const string& input) {
-    if (input == "B") {
-        displayScooterMakes();
-        chatState = "scooter_loan_make";
+    if (input == "B") { displayScooterMakes(); chatState = "scooter_loan_make"; return; }
+
+    int selectedIndex = stoi(input) - 1;
+    if (selectedIndex >= 0 && selectedIndex < currentOptionsCount) {
+        int loanIndex = currentOptionsLoanIndices[selectedIndex];
+        displayInstallmentPlan(selectedIndex);
+
+        cout << "\nChatbot: Would you like to apply for this loan? (yes/no): ";
+        string applyResponse;
+        getline(cin, applyResponse);
+        transform(applyResponse.begin(), applyResponse.end(), applyResponse.begin(), ::tolower);
+
+        if (applyResponse == "yes" || applyResponse == "y") handleApplyState(loanIndex);
+        else { cout << "Chatbot: Press S for another scooter loan or X to exit.\n"; chatState = "main"; }
     }
-    else {
-        int selectedIndex = -1;
-        try {
-            selectedIndex = stoi(input) - 1;
-        }
-        catch (...) {}
-
-        if (selectedIndex >= 0 && selectedIndex < currentOptionsCount) {
-            displayInstallmentPlan(selectedIndex);
-
-            // Ask if they want to apply - using direct input to avoid case conversion issues
-            cout << "\nChatbot: Would you like to apply for this loan? (yes/no): ";
-            string applyResponse;
-            getline(cin, applyResponse);
-
-            for (char& c : applyResponse) {
-                c = tolower(c);
-            }
-
-            if (applyResponse == "yes" || applyResponse == "y") {
-                handleApplyState();
-            }
-            else {
-                cout << "Chatbot: Press S for another scooter loan or X to exit." << endl;
-                chatState = "main";
-            }
-        }
-        else {
-            cout << "Chatbot: That is not a valid selection. Please type a number from 1 to "
-                << currentOptionsCount << ", B to go back, or X to exit." << endl;
-        }
-    }
+    else cout << "Chatbot: Invalid selection.\n";
 }
 
-void ScooterLoanHandler::handleApplyState() {
-    cout << "\n=== STARTING SCOOTER LOAN APPLICATION PROCESS ===" << endl;
+void ScooterLoanHandler::handleApplyState(int loanIndex) {
+    cout << "\n=== STARTING SCOOTER LOAN APPLICATION ===\n";
 
     Applicant applicant;
     applicant.collectData();
@@ -132,102 +89,68 @@ void ScooterLoanHandler::handleApplyState() {
     else {
         cout << "Press S to try again or X to exit." << endl;
     }
+    // Automatically ask for starting month after application
+    cout << "\nChatbot: Enter starting month for installment plan (1-12): ";
+    int startMonth;
+    cin >> startMonth;
+    cin.ignore();  // clear newline from input buffer
+
+    displayInstallmentPlanWithMonths(loanIndex, startMonth);
+
+    cout << "\nChatbot: Application process completed. Press S for another scooter loan or X to exit.\n";
     chatState = "main";
 }
 
-void ScooterLoanHandler::displayScooterMakes() {
-    vector<string> availableMakes = getAvailableMakes();
 
-    cout << "Chatbot: Available scooter makes:" << endl;
-    for (size_t i = 0; i < availableMakes.size(); i++) {
+void ScooterLoanHandler::displayScooterMakes() {
+    auto availableMakes = getAvailableMakes();
+    cout << "Scooter makes:\n";
+    for (size_t i = 0; i < availableMakes.size(); i++)
         cout << "  " << (i + 1) << ". " << availableMakes[i] << endl;
-    }
-    cout << "\nChatbot: Please select a make (e.g., 1, 2) or press B to go back." << endl;
+    cout << "Select a make or B to go back.\n";
 }
 
 void ScooterLoanHandler::displayScooterModels(const string& selectedMake) {
-    bool foundOptions = false;
+    currentOptionsLoanIndices.clear();
     currentOptionsCount = 0;
-    currentOptionsMake.clear();
-    currentOptionsModel.clear();
-    currentOptionsDistance.clear();
-    currentOptionsChargingTime.clear();
-    currentOptionsMaxSpeed.clear();
-    currentOptionsPrice.clear();
-    currentOptionsDownPayment.clear();
-    currentOptionsMonths.clear();
 
-    for (const auto& loan : scooterLoans) {
-        if (loan.getMake() == selectedMake) {
-            if (!foundOptions) {
-                cout << "Chatbot: Here are the models for " << selectedMake << ":" << endl;
-                foundOptions = true;
-            }
-
-            currentOptionsMake.push_back(loan.getMake());
-            currentOptionsModel.push_back(loan.getModel());
-            currentOptionsDistance.push_back(loan.getDistancePerChargeKm());
-            currentOptionsChargingTime.push_back(loan.getChargingTimeHrs());
-            currentOptionsMaxSpeed.push_back(loan.getMaxSpeedKmH());
-            currentOptionsPrice.push_back(loan.getPrice());
-            currentOptionsDownPayment.push_back(loan.getDownPayment());
-            currentOptionsMonths.push_back(loan.getInstallments());
-
-            cout << "  " << (currentOptionsCount + 1) << ". " << loan.getModel()
-                << ", Range: " << loan.getDistancePerChargeKm() << "km"
-                << ", Charging: " << loan.getChargingTimeHrs() << "hrs"
-                << ", Max Speed: " << loan.getMaxSpeedKmH() << "km/h"
-                << ", Price: $" << loan.getPrice() << endl;
-
+    for (size_t i = 0; i < scooterLoans.size(); i++) {
+        if (scooterLoans[i].getMake() == selectedMake) {
+            currentOptionsLoanIndices.push_back(static_cast<int>(i));
+            cout << "  " << (currentOptionsCount + 1) << ". " << scooterLoans[i].getModel()
+                << ", Price: $" << scooterLoans[i].getPrice() << endl;
             currentOptionsCount++;
         }
     }
 
-    if (foundOptions) {
-        cout << "\nChatbot: Please select a model (e.g., 1, 2) to see the detailed plan." << endl;
-        cout << "Chatbot: Press B to go back to make selection." << endl;
+    if (currentOptionsCount > 0) {
+        cout << "Select a model or B to go back.\n";
         chatState = "scooter_loan_model";
     }
-    else {
-        cout << "Chatbot: Sorry, no models found for the selected make. Please try again." << endl;
-    }
+    else cout << "No models found for selected make.\n";
 }
 
 void ScooterLoanHandler::displayInstallmentPlan(int selectedIndex) {
-    // Create a temporary scooterLoan object to use its print functionality
-    scooterLoan selectedLoan(
-        currentOptionsMake[selectedIndex],
-        currentOptionsModel[selectedIndex],
-        currentOptionsDistance[selectedIndex],
-        currentOptionsChargingTime[selectedIndex],
-        currentOptionsMaxSpeed[selectedIndex],
-        currentOptionsMonths[selectedIndex],
-        currentOptionsPrice[selectedIndex],
-        currentOptionsDownPayment[selectedIndex]
-    );
+    int loanIndex = currentOptionsLoanIndices[selectedIndex];
+    cout << "\n=== DETAILED INSTALLMENT PLAN ===\n";
+    scooterLoans[loanIndex].printInstallmentPlan();
+}
 
-    cout << "\n=== DETAILED INSTALLMENT PLAN ===" << endl;
-    cout << "Chatbot: Here's the detailed installment plan for "
-        << currentOptionsMake[selectedIndex] << " " << currentOptionsModel[selectedIndex] << ":\n";
-    selectedLoan.printInstallmentPlan();
+void ScooterLoanHandler::displayInstallmentPlanWithMonths(int loanIndex, int startMonth) {
+    scooterLoans[loanIndex].printInstallmentPlanStartingAt(startMonth);
 }
 
 vector<string> ScooterLoanHandler::getAvailableMakes() {
-    vector<string> availableMakes;
-    for (const auto& loan : scooterLoans) {
-        if (find(availableMakes.begin(), availableMakes.end(), loan.getMake()) == availableMakes.end()) {
-            availableMakes.push_back(loan.getMake());
-        }
-    }
-    return availableMakes;
+    vector<string> makes;
+    for (const auto& loan : scooterLoans)
+        if (find(makes.begin(), makes.end(), loan.getMake()) == makes.end())
+            makes.push_back(loan.getMake());
+    return makes;
 }
 
 bool ScooterLoanHandler::isValidMakeOption(const string& input) {
-    vector<string> availableMakes = getAvailableMakes();
-    for (size_t i = 0; i < availableMakes.size(); i++) {
-        if (input == to_string(i + 1)) {
-            return true;
-        }
-    }
+    auto makes = getAvailableMakes();
+    for (size_t i = 0; i < makes.size(); i++)
+        if (input == to_string(i + 1)) return true;
     return false;
 }

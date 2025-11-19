@@ -1,4 +1,6 @@
 #pragma once
+#ifndef CAR_H
+#define CAR_H
 
 #include <string>
 #include <vector>
@@ -16,30 +18,26 @@ private:
     // State handlers
     void handleMainState(const std::string& input);
     void handleSelectState(const std::string& input);
-    void handleApplyState();
 
-    // UI / display helpers
+    // Updated: take selected loan index
+    void handleApplyState(int selectedIndex);
+
+    // Display helpers
     void displayCarOptions();
     void displayInstallmentPlan(int selectedIndex);
+    void displayInstallmentPlanWithMonths(int selectedIndex, int month);
 
     // Utilities
-    int parseFormattedNumber(const std::string& str);
     std::string boolToYesNo(bool v) const;
 
     // Data
-    std::vector<carLoan> carLoans;
+    std::vector<carLoan> carLoans;          // all car loan objects
 
     // Interaction state
-    std::string chatState; // "main" or "car_loan_select"
-    int currentOptionsCount;
+    std::string chatState;                  // "main", "car_loan_select"
+    int currentOptionsCount;                // number of options currently shown
 
-    // Vectors storing the currently shown option attributes (strings for easy comparison)
-    std::vector<std::string> currentOptionsMake;
-    std::vector<std::string> currentOptionsModel;
-    std::vector<std::string> currentOptionsEngine;
-    std::vector<std::string> currentOptionsUsed;
-    std::vector<std::string> currentOptionsYear;
-    std::vector<std::string> currentOptionsPrice;
-    std::vector<std::string> currentOptionsDownPayment;
-    std::vector<std::string> currentOptionsMonths;
+    // Only store the INDEX into carLoans for current options
+    std::vector<int> currentOptionsLoanIndex;
 };
+#endif
