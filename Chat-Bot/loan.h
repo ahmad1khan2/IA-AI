@@ -1,4 +1,6 @@
 #pragma once
+
+
 #include <iostream>
 #include <string>
 #include <iomanip>
@@ -129,6 +131,12 @@ public:
     // Print installment plan with an extra "Month" column starting at startMonth.
     // startMonth <= 0 will be treated as 1.
     void printInstallmentPlanStartingAt(int startMonth) const {
+        static const string months[] = {
+            "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+            "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+		};
         // normalize startMonth
         if (startMonth <= 0) startMonth = 1;
 
@@ -169,7 +177,7 @@ public:
         double totalPaid = 0.0;
 
         for (int i = 1; i <= n; ++i) {
-            int displayMonth = startMonth + (i - 1);
+            string displayMonth = months[((startMonth-1) + (i - 1))%12];
             double principalThisMonth;
             if (i == n) {
                 principalThisMonth = remaining;
