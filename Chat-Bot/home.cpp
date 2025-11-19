@@ -121,8 +121,12 @@ void HomeLoanHandler::handleApplyState() {
 
     Applicant applicant;
     applicant.collectData();
-
-    cout << "Chatbot: Application process completed. Press H for another home loan or X to exit." << endl;
+    if (!applicant.applicationId.empty()) {
+        cout << "Chatbot: Application process completed. Press H for another home loan or X to exit." << endl;
+    }
+    else {
+        cout << "Press H to try again or X to exit." << endl;
+    }
     chatState = "main";
 }
 
