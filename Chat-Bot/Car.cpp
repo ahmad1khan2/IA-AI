@@ -1,5 +1,6 @@
 #include "Car.h"
 #include "fileHandling.h"   // Parser::readCar / stoiSafe etc.
+#include "CarState.h"
 #include <iostream>
 #include <iomanip>
 #include <sstream>
@@ -9,61 +10,46 @@
 using namespace std;
 
 CarLoanHandler::CarLoanHandler()
-    : chatState("main"), currentOptionsCount(0)
+    : chatState("main"), carLoanAttempt(0), currentOptionsCount(0)
 {
     // Load car loans using parser
     carLoans = Parser::readCar();
-    cout << "Debug: Loaded " << carLoans.size() << " car loans" << endl;
+
 }
 
-void CarLoanHandler::runCar() {
-    cout << "Car Loan Chatbot started. Type something (X to exit)" << endl;
-    string input;
+void CarLoanHandler::handleInput(const string& input) {
+    string inputForMatching = input;
+    transform(inputForMatching.begin(), inputForMatching.end(),
+        inputForMatching.begin(), ::tolower);
 
-    while (true) {
-        cout << "You: ";
-        getline(cin, input);
-
-        // normalize input to lowercase
-        string inputForMatching = input;
-        transform(inputForMatching.begin(), inputForMatching.end(),
-            inputForMatching.begin(), ::tolower);
-
-        if (inputForMatching == "x") {
-            cout << "Chatbot: Goodbye!" << endl;
-            break;
-        }
-
-        if (chatState == "main") {
-            handleMainState(inputForMatching);
-        }
-        else if (chatState == "car_loan_select") {
-            handleSelectState(inputForMatching);
-        }
+    if (chatState == "main") {
+        handleMainState(inputForMatching);
+    }
+    else if (chatState == "car_loan_select") {
+        handleSelectState(inputForMatching);
     }
 }
 
 void CarLoanHandler::handleMainState(const string& input) {
-    if (input == "c") {
+    if (input == "c" || input == "show") {
         if (carLoans.empty()) {
             cout << "Chatbot: Sorry, no car loan options are currently available." << endl;
         }
         else {
-            cout << "Chatbot: You are applying for a car loan. Showing available car options." << endl;
+            cout << "Chatbot: Available car loan options:" << endl;
             displayCarOptions();
             chatState = "car_loan_select";
+            carLoanAttempt = 0;
         }
     }
     else {
-        cout << "Chatbot: Please press C for car loan or X to exit." << endl;
+        cout << "Chatbot: Type 'show' to see car options or 'menu' to return to main menu." << endl;
     }
 }
 
 void CarLoanHandler::displayCarOptions() {
     currentOptionsCount = 0;
     currentOptionsLoanIndex.clear();
-
-    cout << "Chatbot: Here are available car loan options:" << endl;
 
     for (int i = 0; i < carLoans.size(); i++) {
         const auto& loan = carLoans[i];
@@ -72,8 +58,8 @@ void CarLoanHandler::displayCarOptions() {
         cout << "  " << (currentOptionsCount + 1) << ". "
             << loan.getMake() << " " << loan.getModel()
             << " (" << loan.getYear() << (loan.isUsed() ? ", used" : ", new") << ")"
-            << " - Price: " << loan.getPrice()
-            << ", Down: " << loan.getDownPayment()
+            << ", Price: " << loan.getPrice()
+            << ", Down Payment: " << loan.getDownPayment()
             << " (for " << loan.getInstallments() << " months)" << endl;
 
         currentOptionsCount++;
@@ -81,7 +67,6 @@ void CarLoanHandler::displayCarOptions() {
 
     if (currentOptionsCount > 0) {
         cout << "\nChatbot: Please select an option number to view the detailed installment plan." << endl;
-        cout << "Chatbot: Press B to go back to main menu." << endl;
     }
     else {
         cout << "Chatbot: No car loan options found." << endl;
@@ -91,7 +76,7 @@ void CarLoanHandler::displayCarOptions() {
 
 void CarLoanHandler::handleSelectState(const string& input) {
     if (input == "b") {
-        cout << "Chatbot: Returning to main menu. Press C for car loan, X to exit." << endl;
+        cout << "Chatbot: Returning to main menu. Press C for car loan or X to exit." << endl;
         chatState = "main";
         return;
     }
@@ -161,8 +146,6 @@ void CarLoanHandler::handleApplyState(int selectedIndex) {
         cout << "Press C to try again or X to exit." << endl;
     }
 
-    cout << "Chatbot: Application process completed." << endl;
-
     // Ask for starting month to view installment plan
     int startMonth = 1;
     cout << "Chatbot: Enter starting month for installment plan (1-12): ";
@@ -180,7 +163,7 @@ void CarLoanHandler::handleApplyState(int selectedIndex) {
     // Show installment plan from chosen month
     displayInstallmentPlanWithMonths(selectedIndex, startMonth);
 
-    cout << "\nChatbot: Press C for another car loan or X to exit." << endl;
+    cout << "\nChatbot: Press C for another car loan or H for home loan or S for scooter loan or X to exit." << endl;
     chatState = "main";
 }
 

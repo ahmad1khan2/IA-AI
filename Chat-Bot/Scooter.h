@@ -10,33 +10,38 @@
 using namespace std;
 
 class ScooterLoanHandler {
+public:
+    ScooterLoanHandler();
+
+    void handleInput(const std::string& input);
+    string getCurrentState() const { return chatState; }
+
 private:
+    // State
     string chatState;
     int scooterLoanAttempt;
-    int currentOptionsCount;
+
+    // Data
     vector<scooterLoan> scooterLoans;
 
-    // Only store indices into scooterLoans
-    vector<int> currentOptionsLoanIndices;
+    // Current options
+    int currentOptionsCount;
+    vector<int> currentOptionsLoanIndices; // track indices of loans currently displayed
 
-    // Handler methods
+    // State handlers
     void handleMainState(const string& input);
     void handleMakeState(const string& input);
     void handleModelState(const string& input);
-    void handleApplyState(int loanIndex);
+    void handleApplyState(int selectedIndex); // pass selected loan index
 
-    // Display methods
+    // Helper functions
     void displayScooterMakes();
     void displayScooterModels(const string& selectedMake);
     void displayInstallmentPlan(int selectedIndex);
-    void displayInstallmentPlanWithMonths(int loanIndex, int startMonth);
+    void displayInstallmentPlanWithMonths(int loanIndex, int month);
 
-    // Helper methods
+    // Utilities
     vector<string> getAvailableMakes();
     bool isValidMakeOption(const string& input);
-
-public:
-    ScooterLoanHandler();
-    void runScooter();
 };
 #endif

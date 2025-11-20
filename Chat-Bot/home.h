@@ -13,7 +13,9 @@ using namespace std;
 class HomeLoanHandler {
 public:
     HomeLoanHandler();
-    void runHome();
+   
+    void handleInput(const std::string& input);
+    string getCurrentState() const { return chatState; }
 
 private:
     // State

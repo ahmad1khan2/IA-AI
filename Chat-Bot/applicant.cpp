@@ -2,6 +2,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>  
+#include <algorithm>
 
 using namespace std;
 
@@ -154,60 +155,72 @@ void Applicant::collectData() {
     // Existing Loans
     cout << "Do you have existing loans? (yes/no): ";
     string hasLoans;
-    getline(cin, hasLoans);
+    bool validLoanResponse = false;
 
-    if (hasLoans == "yes") {
-        string status, total, returned, due, bank, category;
+    while (!validLoanResponse) {
+        getline(cin, hasLoans);
 
-        // Loan Status
-        do {
-            cout << "Loan Status (Active/Inactive): ";
-            getline(cin, status);
-            if (!isValidLoanStatus(status)) {
-                cout << "Error: Please enter: Active or Inactive" << endl;
-            }
-        } while (!isValidLoanStatus(status));
+        if (hasLoans == "yes") {
+            validLoanResponse = true;
+            string status, total, returned, due, bank, category;
 
-        // Total Loan Amount 
-        do {
-            cout << "Total Loan Amount: ";
-            getline(cin, total);
-            if (!isValidNumeric(total)) {
-                cout << "Error: Amount must contain only numbers without commas" << endl;
-            }
-        } while (!isValidNumeric(total));
+            // Loan Status
+            do {
+                cout << "Loan Status (Active/Inactive): ";
+                getline(cin, status);
+                if (!isValidLoanStatus(status)) {
+                    cout << "Error: Please enter: Active or Inactive" << endl;
+                }
+            } while (!isValidLoanStatus(status));
 
-        // Amount Returned
-        do {
-            cout << "Amount Returned: ";
-            getline(cin, returned);
-            if (!isValidNumeric(returned)) {
-                cout << "Error: Amount must contain only numbers without commas" << endl;
-            }
-        } while (!isValidNumeric(returned));
+            // Total Loan Amount 
+            do {
+                cout << "Total Loan Amount: ";
+                getline(cin, total);
+                if (!isValidNumeric(total)) {
+                    cout << "Error: Amount must contain only numbers without commas" << endl;
+                }
+            } while (!isValidNumeric(total));
 
-        // Amount Still Due
-        do {
-            cout << "Amount Still Due: ";
-            getline(cin, due);
-            if (!isValidNumeric(due)) {
-                cout << "Error: Amount must contain only numbers without commas" << endl;
-            }
-        } while (!isValidNumeric(due));
+            // Amount Returned
+            do {
+                cout << "Amount Returned: ";
+                getline(cin, returned);
+                if (!isValidNumeric(returned)) {
+                    cout << "Error: Amount must contain only numbers without commas" << endl;
+                }
+            } while (!isValidNumeric(returned));
 
-        cout << "Bank Name: ";
-        getline(cin, bank);
+            // Amount Still Due
+            do {
+                cout << "Amount Still Due: ";
+                getline(cin, due);
+                if (!isValidNumeric(due)) {
+                    cout << "Error: Amount must contain only numbers without commas" << endl;
+                }
+            } while (!isValidNumeric(due));
 
-        // Loan Category
-        do {
-            cout << "Loan Category (Car/Home/Bike): ";
-            getline(cin, category);
-            if (!isValidLoanCategory(category)) {
-                cout << "Error: Please enter: Car, Home, or Bike" << endl;
-            }
-        } while (!isValidLoanCategory(category));
+            cout << "Bank Name: ";
+            getline(cin, bank);
 
-        addExistingLoan(status, total, returned, due, bank, category);
+            // Loan Category
+            do {
+                cout << "Loan Category (Car/Home/Scooter): ";
+                getline(cin, category);
+                if (!isValidLoanCategory(category)) {
+                    cout << "Error: Please enter: Car, Home, or Scooter" << endl;
+                }
+            } while (!isValidLoanCategory(category));
+
+            addExistingLoan(status, total, returned, due, bank, category);
+        }
+        else if (hasLoans == "no") {
+            validLoanResponse = true;
+            // Continue without adding loans
+        }
+        else {
+            cout << "Invalid input. Please enter 'yes' or 'no': ";
+        }
     }
 
     // References
@@ -296,33 +309,42 @@ void Applicant::collectData() {
 
     cout << "\nDo you want to submit this application? (yes/no): ";
     string confirm;
-    getline(cin, confirm);
+    bool validConfirm = false;
 
-    if (confirm == "yes") {
-        applicationId = generateApplicationId();
-        handleImageUpload();
+    while (!validConfirm) {
+        getline(cin, confirm);
 
-        // Check if ALL images were uploaded successfully before saving
-        bool allImagesUploaded = (cnicFrontPath != "NOT_UPLOADED" &&
-            cnicBackPath != "NOT_UPLOADED" &&
-            electricityBillPath != "NOT_UPLOADED" &&
-            salarySlipPath != "NOT_UPLOADED");
+        if (confirm == "yes") {
+            validConfirm = true;
+            applicationId = generateApplicationId();
+            handleImageUpload();
 
-        if (allImagesUploaded) {
-            if (saveToFile()) {
-                cout << "Application submitted successfully! Your Application ID: " << applicationId << endl;
+            // Check if ALL images were uploaded successfully before saving
+            bool allImagesUploaded = (cnicFrontPath != "NOT_UPLOADED" &&
+                cnicBackPath != "NOT_UPLOADED" &&
+                electricityBillPath != "NOT_UPLOADED" &&
+                salarySlipPath != "NOT_UPLOADED");
+
+            if (allImagesUploaded) {
+                if (saveToFile()) {
+                    cout << "Application submitted successfully! Your Application ID: " << applicationId << endl;
+                }
+                else {
+                    cout << "Error saving application. Please try again." << endl;
+                }
             }
             else {
-                cout << "Error saving application. Please try again." << endl;
+                // Reset application ID since it wasn't successfully submitted
+                applicationId = "";
             }
         }
-        else {
-            // Reset application ID since it wasn't successfully submitted
-            applicationId = "";
+        else if (confirm == "no") {
+            validConfirm = true;
+            cout << "Application cancelled." << endl;
         }
-    }
-    else {
-        cout << "Application cancelled." << endl;
+        else {
+            cout << "Invalid input. Please enter 'yes' or 'no': ";
+        }
     }
 }
 
@@ -638,13 +660,17 @@ bool isValidMaritalStatus(const string& status) {
 }
 
 // Loan status validation
-bool isValidLoanStatus(const string& status) {
-    return status == "Active" || status == "Inactive";
+bool isValidLoanStatus(const string & status) {
+    string lowerStatus = status;
+    transform(lowerStatus.begin(), lowerStatus.end(), lowerStatus.begin(), ::tolower);
+    return lowerStatus == "active" || lowerStatus == "inactive";
 }
 
 // Loan category validation
 bool isValidLoanCategory(const string& category) {
-    return category == "Car" || category == "Home" || category == "Bike";
+    string lowerCategory = category;
+    transform(lowerCategory.begin(), lowerCategory.end(), lowerCategory.begin(), ::tolower);
+    return lowerCategory == "car" || lowerCategory == "home" || lowerCategory == "scooter";
 }
 bool isValidName(const string& name) {
     if (name.empty()) return false;
