@@ -157,7 +157,7 @@ void HomeLoanHandler::handleApplyState(int selectedIndex) {
 
     displayInstallmentPlanWithMonths(selectedIndex, startMonth);
 
-    cout << "\nChatbot: Press H for another home loan or X to exit." << endl;
+    cout << "\nChatbot: Press H for another home loan or C for car loan or S for scooter loan or Q to check Application with CNIC or X to exit." << endl;
     chatState = "main";
 }
 

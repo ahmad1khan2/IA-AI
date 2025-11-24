@@ -163,7 +163,7 @@ void CarLoanHandler::handleApplyState(int selectedIndex) {
     // Show installment plan from chosen month
     displayInstallmentPlanWithMonths(selectedIndex, startMonth);
 
-    cout << "\nChatbot: Press C for another car loan or H for home loan or S for scooter loan or X to exit." << endl;
+    cout << "\nChatbot: Press C for another car loan or H for home loan or S for scooter loan or Q to check Application with CNIC or X to exit." << endl;
     chatState = "main";
 }
 
