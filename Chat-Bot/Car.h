@@ -7,37 +7,39 @@
 #include "loan.h"
 #include "applicant.h"
 
+using namespace std;
+
 class CarLoanHandler {
 public:
     CarLoanHandler();
 
-    // Start interactive car-loan chatbot
-    void runCar();
+    void handleInput(const std::string& input);
+    string getCurrentState() const { return chatState; }
 
 private:
+    // State
+    string chatState;
+    int carLoanAttempt;
+
+    // Data
+    vector<carLoan> carLoans;
+
+    // Current options
+    int currentOptionsCount;
+    vector<int> currentOptionsLoanIndex; // track indices of loans currently displayed
+
     // State handlers
-    void handleMainState(const std::string& input);
-    void handleSelectState(const std::string& input);
+    void handleMainState(const string& input);
+    void handleSelectState(const string& input);
+    void handleApplyState(int selectedIndex); // pass selected loan index
 
-    // Updated: take selected loan index
-    void handleApplyState(int selectedIndex);
-
-    // Display helpers
+    // Helper functions
     void displayCarOptions();
     void displayInstallmentPlan(int selectedIndex);
     void displayInstallmentPlanWithMonths(int selectedIndex, int month);
 
     // Utilities
-    std::string boolToYesNo(bool v) const;
-
-    // Data
-    std::vector<carLoan> carLoans;          // all car loan objects
-
-    // Interaction state
-    std::string chatState;                  // "main", "car_loan_select"
-    int currentOptionsCount;                // number of options currently shown
-
-    // Only store the INDEX into carLoans for current options
-    std::vector<int> currentOptionsLoanIndex;
+    string boolToYesNo(bool v) const;
 };
+
 #endif

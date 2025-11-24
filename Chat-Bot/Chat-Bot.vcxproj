@@ -124,13 +124,19 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="applicant.cpp" />
+    <ClCompile Include="CarState.cpp" />
     <ClCompile Include="cnic.cpp" />
     <ClCompile Include="Car.cpp" />
+    <ClCompile Include="CNICState.cpp" />
     <ClCompile Include="fileHandling.cpp" />
     <ClCompile Include="home.cpp" />
+    <ClCompile Include="HomeState.cpp" />
     <ClCompile Include="interface.cpp" />
+    <ClCompile Include="MainState.cpp" />
     <ClCompile Include="Scooter.cpp" />
     <ClCompile Include="LenderInterface.cpp" />
+    <ClCompile Include="ScooterState.cpp" />
+    <ClCompile Include="StateManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\..\..\..\..\Car.txt" />
@@ -141,12 +147,19 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="applicant.h" />
+    <ClInclude Include="CarState.h" />
+    <ClInclude Include="ChatState.h" />
     <ClInclude Include="cnic.h" />
     <ClInclude Include="Car.h" />
+    <ClInclude Include="CNICState.h" />
     <ClInclude Include="fileHandling.h" />
     <ClInclude Include="home.h" />
+    <ClInclude Include="HomeState.h" />
     <ClInclude Include="loan.h" />
+    <ClInclude Include="MainState.h" />
     <ClInclude Include="Scooter.h" />
+    <ClInclude Include="ScooterState.h" />
+    <ClInclude Include="StateManager.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

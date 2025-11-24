@@ -10,46 +10,34 @@ HomeLoanHandler::HomeLoanHandler()
     : chatState("main"), homeLoanAttempt(0), currentOptionsCount(0)
 {
     homeLoans = Parser::readHome();
-    cout << "Debug: Loaded " << homeLoans.size() << " home loans" << endl;
+    
 }
 
-void HomeLoanHandler::runHome() {
-    cout << "Home Loan Chatbot started. Type something (X to exit)" << endl;
-    string input;
+void HomeLoanHandler::handleInput(const string& input) {
+    string inputForMatching = input;
+    transform(inputForMatching.begin(), inputForMatching.end(), inputForMatching.begin(), ::tolower);
 
-    while (true) {
-        cout << "You: ";
-        getline(cin, input);
-
-        string inputForMatching = input;
-        transform(inputForMatching.begin(), inputForMatching.end(), inputForMatching.begin(), ::tolower);
-
-        if (inputForMatching == "x") {
-            cout << "Chatbot: Goodbye!" << endl;
-            break;
-        }
-
-        if (chatState == "main") handleMainState(inputForMatching);
-        else if (chatState == "home_loan_area") handleAreaState(inputForMatching);
-        else if (chatState == "home_loan_select") handleSelectState(inputForMatching);
-    }
+    if (chatState == "main") handleMainState(inputForMatching);
+    else if (chatState == "home_loan_area") handleAreaState(inputForMatching);
+    else if (chatState == "home_loan_select") handleSelectState(inputForMatching);
 }
 
 void HomeLoanHandler::handleMainState(const string& input) {
-    if (input == "h") {
+    if (input == "h" || input == "show") {
         if (homeLoans.empty()) {
             cout << "Chatbot: Sorry, no home loan options are currently available." << endl;
         }
         else {
-            cout << "Chatbot: You are applying for a home loan. Please select area (1-4)" << endl;
+            cout << "Chatbot: Please select area (1-4)" << endl;
             chatState = "home_loan_area";
             homeLoanAttempt = 0;
         }
     }
     else {
-        cout << "Chatbot: Please press H for home loan or X to exit." << endl;
+        cout << "Chatbot: Type 'show' to see home loan options or 'menu' to return to main menu." << endl;
     }
 }
+
 
 void HomeLoanHandler::handleAreaState(const string& input) {
     if (!isValidAreaOption(input)) {
@@ -89,7 +77,7 @@ void HomeLoanHandler::displayHomeLoanOptions(const string& targetArea) {
 
     if (foundOptions) {
         cout << "\nChatbot: Please select an option number to view the detailed plan." << endl;
-        cout << "Chatbot: Press B to go back to main menu." << endl;
+        
         chatState = "home_loan_select";
     }
     else {
@@ -97,7 +85,7 @@ void HomeLoanHandler::displayHomeLoanOptions(const string& targetArea) {
         if (homeLoanAttempt == 1) {
             string available = getAvailableAreas();
             if (!available.empty()) {
-                cout << "Chatbot: Area not available. Available: " << available << endl;
+                cout << "Chatbot: I am so sorry. This Area is not available. Available areas: " << available << endl;
             }
             else {
                 cout << "Chatbot: No home loans available currently." << endl;
@@ -105,7 +93,7 @@ void HomeLoanHandler::displayHomeLoanOptions(const string& targetArea) {
             }
         }
         else {
-            cout << "Chatbot: Area still unavailable. Returning to main menu." << endl;
+            cout << "Chatbot:This area is still unavailable. Returning to main menu." << endl;
             chatState = "main";
         }
     }
@@ -135,7 +123,7 @@ void HomeLoanHandler::handleSelectState(const string& input) {
             handleApplyState(selectedIndex);
         }
         else {
-            cout << "Chatbot: Press H for another home loan or X to exit." << endl;
+            cout << "Chatbot: Type H if you would like to continue exploring home loan options. Type A to explore other loan options or X to exit." << endl;
             chatState = "main";
         }
     }
@@ -169,7 +157,7 @@ void HomeLoanHandler::handleApplyState(int selectedIndex) {
 
     displayInstallmentPlanWithMonths(selectedIndex, startMonth);
 
-    cout << "\nChatbot: Press H for another home loan or X to exit." << endl;
+    cout << "\nChatbot: Press H for another home loan or C for car loan or S for scooter loan or Q to check Application with CNIC or X to exit." << endl;
     chatState = "main";
 }
 
@@ -205,3 +193,5 @@ string HomeLoanHandler::getAvailableAreas() {
 
     return available;
 }
+
+

@@ -76,6 +76,4 @@ void queryApplicationsByCNIC() {
 
     countApplicationsByCNIC(cnic);
 
-    // show menu again
-    cout << "\n\nPress A to apply for a loan, C to check another CNIC, or X to exit.\n";
 }
