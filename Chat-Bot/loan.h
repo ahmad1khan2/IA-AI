@@ -328,3 +328,55 @@ public:
         cout << "  Max speed (km/h): " << maxSpeedKmH << '\n';
     }
 };
+
+class personalLoan : public Loan {//for personal loan price will be entered by the user validated to be less than maxAmount
+private:
+    string loanType;
+    int maxAmount;
+    double interestRate;     // in percentage (e.g., 15 for 15%)
+    int processingFee;
+
+public:
+    // Constructor
+    personalLoan(const string& loanType, int maxAmount, double interestRate, int processingFee,
+        int installments, int price, int down)
+        : Loan(installments, price, down),
+        loanType(loanType),
+        maxAmount(maxAmount),
+        interestRate(interestRate),
+        processingFee(processingFee)
+    {
+    }
+
+    // Copy constructor
+    personalLoan(const personalLoan& other)
+        : Loan(other),
+        loanType(other.loanType),
+        maxAmount(other.maxAmount),
+        interestRate(other.interestRate),
+        processingFee(other.processingFee)
+    {
+    }
+
+    // Getters
+    const string& getLoanType() const { return loanType; }
+    int getMaxAmount() const { return maxAmount; }
+    double getInterestRate() const { return interestRate; }
+    int getProcessingFee() const { return processingFee; }
+
+    // Setters
+    void setLoanType(const string& s) { loanType = s; }
+    void setMaxAmount(int a) { maxAmount = a; }
+    void setInterestRate(double r) { interestRate = r; }
+    void setProcessingFee(int f) { processingFee = f; }
+
+    // Print details using cout
+    void print() const override {
+        cout << "PersonalLoan:\n";
+        Loan::print();
+        cout << "  Loan Type: " << loanType << '\n';
+        cout << "  Max Amount: " << maxAmount << '\n';
+        cout << "  Interest Rate: " << fixed << setprecision(2) << interestRate << "%\n";
+        cout << "  Processing Fee: " << processingFee << '\n';
+    }
+};
