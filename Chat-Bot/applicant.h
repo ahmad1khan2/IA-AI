@@ -65,8 +65,7 @@ public:
     bool copyFile(const string& sourcePath, const string& destPath);
 
 private:
-    string generateApplicationId();
-    bool saveToFile();
+
     void showApplicationSummary();
 };
 
@@ -82,9 +81,6 @@ bool isValidEmail(const string& email);
 
 // Helper function to validate date format DD-MM-YYYY
 bool isValidDate(const string& date);
-
-// CNIC validation - 13 digits without dashes
-bool isValidCNIC(const string& cnic);
 
 // Phone number validation - 11 digits
 bool isValidPhone(const string& phone);
@@ -110,7 +106,5 @@ bool isValidName(const string& name);
 // Postal code validation - 5 digits
 bool isValidPostalCode(const string& postalCode);
 
-// searching count through CNIC
-void countApplicationsByCNIC(string cnic);
 
 #endif

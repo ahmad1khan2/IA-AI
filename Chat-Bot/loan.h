@@ -88,10 +88,10 @@ public:
 
         // Column headings
         cout << left
-             << setw(8)  << "No."
-             << setw(12) << "Installment"
-             << setw(18) << "Principal Paid"
-             << setw(18) << "Remaining" << '\n';
+            << setw(8) << "No."
+            << setw(12) << "Installment"
+            << setw(18) << "Principal Paid"
+            << setw(18) << "Remaining" << '\n';
         cout << string(70, '-') << '\n';
 
         // Schedule calculation
@@ -117,10 +117,10 @@ public:
             totalPaid += principalThisMonth;
 
             cout << right << setw(4) << month << "   "
-                 << setw(12) << fixed << setprecision(2) << perInstallment << "   "
-                 << setw(12) << fixed << setprecision(2) << principalThisMonth << "   "
-                 << setw(12) << fixed << setprecision(2) << (remaining > 0.0 ? remaining : 0.0)
-                 << '\n';
+                << setw(12) << fixed << setprecision(2) << perInstallment << "   "
+                << setw(12) << fixed << setprecision(2) << principalThisMonth << "   "
+                << setw(12) << fixed << setprecision(2) << (remaining > 0.0 ? remaining : 0.0)
+                << '\n';
         }
 
         cout << string(70, '-') << '\n';
@@ -136,7 +136,7 @@ public:
             "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
             "Jan", "Feb", "Mar", "Apr", "May", "Jun",
             "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-		};
+        };
         // normalize startMonth
         if (startMonth <= 0) startMonth = 1;
 
@@ -165,11 +165,11 @@ public:
 
         // Column headings include Month
         cout << left
-             << setw(8)  << "No."
-             << setw(10) << "Month"
-             << setw(14) << "Installment"
-             << setw(18) << "Principal Paid"
-             << setw(18) << "Remaining" << '\n';
+            << setw(8) << "No."
+            << setw(10) << "Month"
+            << setw(14) << "Installment"
+            << setw(18) << "Principal Paid"
+            << setw(18) << "Remaining" << '\n';
         cout << string(80, '-') << '\n';
 
         // Schedule calculation
@@ -177,11 +177,12 @@ public:
         double totalPaid = 0.0;
 
         for (int i = 1; i <= n; ++i) {
-            string displayMonth = months[((startMonth-1) + (i - 1))%12];
+            string displayMonth = months[((startMonth - 1) + (i - 1)) % 12];
             double principalThisMonth;
             if (i == n) {
                 principalThisMonth = remaining;
-            } else {
+            }
+            else {
                 principalThisMonth = perInstallment;
             }
 
@@ -193,11 +194,11 @@ public:
             totalPaid += principalThisMonth;
 
             cout << right << setw(4) << i << "   "
-                 << setw(6) << displayMonth << "   "
-                 << setw(12) << fixed << setprecision(2) << perInstallment << "   "
-                 << setw(12) << fixed << setprecision(2) << principalThisMonth << "   "
-                 << setw(12) << fixed << setprecision(2) << (remaining > 0.0 ? remaining : 0.0)
-                 << '\n';
+                << setw(6) << displayMonth << "   "
+                << setw(12) << fixed << setprecision(2) << perInstallment << "   "
+                << setw(12) << fixed << setprecision(2) << principalThisMonth << "   "
+                << setw(12) << fixed << setprecision(2) << (remaining > 0.0 ? remaining : 0.0)
+                << '\n';
         }
 
         cout << string(80, '-') << '\n';
@@ -326,5 +327,57 @@ public:
         cout << "  Distance per charge (km): " << distancePerChargeKm << '\n';
         cout << "  Charging time (hrs): " << fixed << setprecision(2) << chargingTimeHrs << '\n';
         cout << "  Max speed (km/h): " << maxSpeedKmH << '\n';
+    }
+};
+
+class personalLoan : public Loan {//for personal loan price will be entered by the user validated to be less than maxAmount
+private:
+    string loanType;
+    int maxAmount;
+    double interestRate;     // in percentage (e.g., 15 for 15%)
+    int processingFee;
+
+public:
+    // Constructor
+    personalLoan(const string& loanType, int maxAmount, double interestRate, int processingFee,
+        int installments, int price, int down)
+        : Loan(installments, price, down),
+        loanType(loanType),
+        maxAmount(maxAmount),
+        interestRate(interestRate),
+        processingFee(processingFee)
+    {
+    }
+
+    // Copy constructor
+    personalLoan(const personalLoan& other)
+        : Loan(other),
+        loanType(other.loanType),
+        maxAmount(other.maxAmount),
+        interestRate(other.interestRate),
+        processingFee(other.processingFee)
+    {
+    }
+
+    // Getters
+    const string& getLoanType() const { return loanType; }
+    int getMaxAmount() const { return maxAmount; }
+    double getInterestRate() const { return interestRate; }
+    int getProcessingFee() const { return processingFee; }
+
+    // Setters
+    void setLoanType(const string& s) { loanType = s; }
+    void setMaxAmount(int a) { maxAmount = a; }
+    void setInterestRate(double r) { interestRate = r; }
+    void setProcessingFee(int f) { processingFee = f; }
+
+    // Print details using cout
+    void print() const override {
+        cout << "PersonalLoan:\n";
+        Loan::print();
+        cout << "  Loan Type: " << loanType << '\n';
+        cout << "  Max Amount: " << maxAmount << '\n';
+        cout << "  Interest Rate: " << fixed << setprecision(2) << interestRate << "%\n";
+        cout << "  Processing Fee: " << processingFee << '\n';
     }
 };

@@ -3,6 +3,8 @@
 #include <iostream>
 #include <algorithm>
 
+using namespace std;
+
 // Constructor
 MainState::MainState() {
     readUtterances();
@@ -10,12 +12,12 @@ MainState::MainState() {
 
 // Called when the user first enters this state
 void MainState::onEnter() {
-    std::cout << "Chatbot: Welcome! You can ask about home loans (H), car loans (C), "
-        << "scooter loans (S), or check applications (Q)." << std::endl;
+    cout << "Chatbot: Welcome! You can ask about home loans (H), car loans (C), "
+        << "scooter loans (S), or check applications (Q)." << endl;
 }
 
 // Returns the prompt string for the main menu
-std::string MainState::getPrompt() {
+string MainState::getPrompt() {
     return "How can I help you today? ";
 }
 
@@ -26,18 +28,18 @@ void MainState::readUtterances() {
 }
 
 // Main logic to handle user input
-void MainState::handleInput(const std::string& input) {
-    std::string normalized = input;
-    std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+void MainState::handleInput(const string& input) {
+    string normalized = input;
+    transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
 
     // 1. Check Utterances file matches
     bool found = false;
     for (size_t i = 0; i < userInput.size(); i++) {
-        std::string tempUser = userInput[i];
-        std::transform(tempUser.begin(), tempUser.end(), tempUser.begin(), ::tolower);
+        string tempUser = userInput[i];
+        transform(tempUser.begin(), tempUser.end(), tempUser.begin(), ::tolower);
 
         if (normalized == tempUser) {
-            std::cout << "Chatbot: " << botReply[i] << std::endl;
+            cout << "Chatbot: " << botReply[i] << endl;
             found = true;
             break;
         }
@@ -47,7 +49,7 @@ void MainState::handleInput(const std::string& input) {
     if (!found) {
         for (size_t j = 0; j < userInput.size(); j++) {
             if (userInput[j] == "*") {
-                std::cout << "Chatbot: " << botReply[j] << std::endl;
+                cout << "Chatbot: " << botReply[j] << endl;
                 found = true;
                 break;
             }
@@ -56,8 +58,8 @@ void MainState::handleInput(const std::string& input) {
 
     // 3. Default fallback if nothing matches
     if (!found) {
-        std::cout << "Chatbot: I can help with home loans (H), car loans (C), "
+        cout << "Chatbot: I can help with home loans (H), car loans (C), "
             << "scooter loans (S), or application queries (Q). "
-            << "Or type 'menu' to see options anytime." << std::endl;
+            << "Or type 'menu' to see options anytime." << endl;
     }
 }

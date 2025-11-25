@@ -20,16 +20,24 @@ public:
     static int homeCount;
     static int scooterCount;
     static int carCount;
+    static int personalCount;
 
     // Function declarations
     static void readUtterances(vector<string>& userInput, vector<string>& botReply);
     static vector<homeLoan> readHome();
     static vector<scooterLoan> readScooter();
     static vector<carLoan> readCar();
+    static vector<personalLoan> readPersonal();
     static vector<Loan*> readAllLoans();
 
     // Cleanup function for dynamically allocated loans
     static void cleanupLoans(vector<Loan*>& loans);
+
+    // file handling functions moved from applicant and cnic
+    static bool saveApplicationToFile(const string& fileData);
+    static string generateApplicationId();
+    static void countApplicationsByCNIC(const string& cnic);
+    static bool isValidCNIC(const string& cnic);
 };
 
 #endif // FILEHANDLING_H

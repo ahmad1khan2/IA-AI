@@ -12,7 +12,7 @@ using namespace std;
 // Constructor: Starts the bot in MainState
 StateManager::StateManager() {
     currentState = make_unique<MainState>();
-    //currentState->onEnter(); // Optional: Trigger welcome message immediately
+
 }
 
 // Logic to detect global commands or pass input to current state

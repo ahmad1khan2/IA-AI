@@ -1,8 +1,10 @@
 #include "fileHandling.h"
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <algorithm>
-#include <stdexcept> 
+#include <stdexcept>
+#include <windows.h>  // Add Windows API header
 
 using namespace std;
 
@@ -11,6 +13,18 @@ int Parser::utteranceCount = 0;
 int Parser::homeCount = 0;
 int Parser::scooterCount = 0;
 int Parser::carCount = 0;
+int Parser::personalCount = 0;
+
+// Windows file locking helpers
+static bool lockFile(HANDLE fileHandle) {
+    OVERLAPPED overlapped = { 0 };
+    return LockFileEx(fileHandle, LOCKFILE_EXCLUSIVE_LOCK, 0, MAXDWORD, MAXDWORD, &overlapped);
+}
+
+static bool unlockFile(HANDLE fileHandle) {
+    OVERLAPPED overlapped = { 0 };
+    return UnlockFileEx(fileHandle, 0, MAXDWORD, MAXDWORD, &overlapped);
+}
 
 // --- Helper function implementations ---
 
@@ -345,6 +359,86 @@ vector<carLoan> Parser::readCar() {
     return carLoans;
 }
 
+vector<personalLoan> Parser::readPersonal() {
+    vector<personalLoan> personalLoans;
+    ifstream personalFile("personal.txt");
+    if (!personalFile) {
+        cout << "Error opening personal.txt!" << endl;
+        return personalLoans;
+    }
+
+    string personalLine;
+    // Read and discard the header line
+    if (!getline(personalFile, personalLine)) {
+        cout << "personal.txt is empty or unreadable!" << endl;
+        return personalLoans;
+    }
+
+    personalCount = 0;
+    while (getline(personalFile, personalLine)) {
+        if (personalLine.empty()) continue;
+
+        string parts[6];
+        int partIndex = 0;
+        string currentPart = "";
+
+        // Split line by '#' delimiter
+        for (char c : personalLine) {
+            if (c == '#') {
+                if (partIndex < 6) {
+                    // Trim whitespace and store part
+                    currentPart.erase(0, currentPart.find_first_not_of(" \t"));
+                    if (!currentPart.empty()) currentPart.erase(currentPart.find_last_not_of(" \t") + 1);
+                    parts[partIndex++] = currentPart;
+                    currentPart = "";
+                }
+            }
+            else {
+                currentPart += c;
+            }
+        }
+
+        // Process the final part
+        if (!currentPart.empty() && partIndex < 6) {
+            currentPart.erase(0, currentPart.find_first_not_of(" \t"));
+            if (!currentPart.empty()) currentPart.erase(currentPart.find_last_not_of(" \t") + 1);
+            parts[partIndex] = currentPart;
+        }
+
+        if (partIndex == 5) {
+            string loanType = parts[0];
+            int maxAmount = stoiSafe(parts[1]);
+            int installments = stoiSafe(parts[2]);
+
+            // Process interest rate - remove percentage sign if present
+            string interestStr = parts[3];
+            if (!interestStr.empty() && interestStr.back() == '%') {
+                interestStr.pop_back();
+            }
+            double interestRate = stodSafe(interestStr);
+
+            int processingFee = stoiSafe(parts[4]);
+            int downPayment = stoiSafe(parts[5]);
+
+            // For personal loans, we set price to 0 initially since it will be entered by user
+            // and validated to be less than maxAmount
+            int price = 0;
+
+            // Validate data integrity before creating object
+            if (maxAmount <= 0 || installments <= 0) {
+                continue;
+            }
+
+            personalLoan loan(loanType, maxAmount, interestRate, processingFee,
+                installments, price, downPayment);
+            personalLoans.push_back(loan);
+            personalCount++;
+        }
+    }
+    personalFile.close();
+    return personalLoans;
+}
+
 vector<Loan*> Parser::readAllLoans() {
     vector<Loan*> allLoans;
 
@@ -367,6 +461,12 @@ vector<Loan*> Parser::readAllLoans() {
         for (auto& loan : scooterLoans) {
             allLoans.push_back(new scooterLoan(loan));
         }
+
+        // Read and store personal loans
+        vector<personalLoan> personalLoans = readPersonal();
+        for (auto& loan : personalLoans) {
+            allLoans.push_back(new personalLoan(loan));
+        }
     }
     catch (...) {
         // If any exception happens, delete allocated memory and rethrow
@@ -375,6 +475,195 @@ vector<Loan*> Parser::readAllLoans() {
     }
 
     return allLoans;
+}
+
+
+bool Parser::saveApplicationToFile(const string& fileData) {
+    // Open file with Windows HANDLE for locking
+    HANDLE hFile = CreateFileA(
+        "applications.txt",
+        GENERIC_WRITE,
+        0,  // No sharing while we have the lock
+        NULL,
+        OPEN_ALWAYS,  // Open existing or create new
+        FILE_ATTRIBUTE_NORMAL,
+        NULL
+    );
+
+    if (hFile == INVALID_HANDLE_VALUE) {
+        return false;
+    }
+
+    // Acquire exclusive lock
+    if (!lockFile(hFile)) {
+        CloseHandle(hFile);
+        return false;
+    }
+
+    // Move file pointer to end for appending
+    SetFilePointer(hFile, 0, NULL, FILE_END);
+
+    // Write data with newline
+    string toWrite = fileData + "\n";
+    DWORD bytesWritten;
+    bool success = WriteFile(hFile, toWrite.c_str(), toWrite.length(), &bytesWritten, NULL);
+
+    // Release lock and close handle
+    unlockFile(hFile);
+    CloseHandle(hFile);
+
+    return success;
+}
+
+string Parser::generateApplicationId() {
+    int highestId = 1000; // Default starting ID
+
+    // Open file with Windows HANDLE for locking
+    HANDLE hFile = CreateFileA(
+        "applications.txt",
+        GENERIC_READ,
+        0,  // No sharing while we have the lock
+        NULL,
+        OPEN_EXISTING,
+        FILE_ATTRIBUTE_NORMAL,
+        NULL
+    );
+
+    if (hFile == INVALID_HANDLE_VALUE) {
+        // File doesn't exist, return default starting ID
+        return to_string(highestId + 1);
+    }
+
+    // Acquire exclusive lock
+    if (!lockFile(hFile)) {
+        CloseHandle(hFile);
+        return to_string(highestId + 1);
+    }
+
+    // Read file content
+    stringstream fileContent;
+    char buffer[4096];
+    DWORD bytesRead;
+
+    while (ReadFile(hFile, buffer, sizeof(buffer) - 1, &bytesRead, NULL) && bytesRead > 0) {
+        buffer[bytesRead] = '\0';
+        fileContent << buffer;
+    }
+
+    // Release lock and close handle
+    unlockFile(hFile);
+    CloseHandle(hFile);
+
+    // Parse the content from stringstream
+    string line;
+    while (getline(fileContent, line)) {
+        if (!line.empty()) {
+            size_t pos = line.find('#');
+            if (pos != string::npos) {
+                string idStr = line.substr(0, pos);
+                try {
+                    int currentId = stoi(idStr);
+                    if (currentId > highestId) {
+                        highestId = currentId;
+                    }
+                }
+                catch (...) {
+                    // Ignore invalid IDs
+                }
+            }
+        }
+    }
+
+    // Return next ID
+    return to_string(highestId + 1);
+}
+
+void Parser::countApplicationsByCNIC(const string& cnic) {
+    // Open file with Windows HANDLE for locking
+    HANDLE hFile = CreateFileA(
+        "applications.txt",
+        GENERIC_READ,
+        0,  // No sharing while we have the lock
+        NULL,
+        OPEN_EXISTING,
+        FILE_ATTRIBUTE_NORMAL,
+        NULL
+    );
+
+    if (hFile == INVALID_HANDLE_VALUE) {
+        cout << "Error: applications.txt not found!" << endl;
+        return;
+    }
+
+    // Acquire exclusive lock
+    if (!lockFile(hFile)) {
+        cout << "Error: cannot lock applications.txt!" << endl;
+        CloseHandle(hFile);
+        return;
+    }
+
+    // Read file content
+    stringstream fileContent;
+    char buffer[4096];
+    DWORD bytesRead;
+
+    while (ReadFile(hFile, buffer, sizeof(buffer) - 1, &bytesRead, NULL) && bytesRead > 0) {
+        buffer[bytesRead] = '\0';
+        fileContent << buffer;
+    }
+
+    // Release lock and close handle
+    unlockFile(hFile);
+    CloseHandle(hFile);
+
+    // Parse the content from stringstream
+    int submitted = 0;
+    int approved = 0;
+    int rejected = 0;
+    string line;
+
+    while (getline(fileContent, line)) {
+        // Split line by #
+        string fields[40];
+        int idx = 0;
+        string temp = "";
+
+        for (int i = 0; i < line.length(); i++) {
+            if (line[i] == '#') {
+                fields[idx++] = temp;
+                temp = "";
+            }
+            else {
+                temp += line[i];
+            }
+        }
+        fields[idx] = temp; // last field
+
+        // CNIC is at index 6
+        if (fields[6] == cnic) {
+            submitted++;
+            string status = fields[31]; // status field
+
+            if (status == "approved" || status == "Approved")
+                approved++;
+            else if (status == "rejected" || status == "Rejected")
+                rejected++;
+        }
+    }
+
+    cout << "\n--- Application Count for CNIC: " << cnic << " ---\n";
+    cout << "Submitted: " << submitted << endl;
+    cout << "Approved:  " << approved << endl;
+    cout << "Rejected:  " << rejected << endl;
+}
+
+
+bool Parser::isValidCNIC(const string& cnic) {
+    if (cnic.length() != 13) return false;
+    for (char c : cnic) {
+        if (!isdigit(c)) return false;
+    }
+    return true;
 }
 
 void Parser::cleanupLoans(vector<Loan*>& loans) {

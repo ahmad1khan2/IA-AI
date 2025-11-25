@@ -7,12 +7,6 @@
 
 using namespace std;
 
-// Function to check if a CNIC is valid (13 digits)
-bool isvalidCNIC(const string& cnic);
-
-// Function to count submitted, approved, and rejected applications for a CNIC
-void countApplicationsByCNIC(const string& cnic);
-
 // Function to query user for CNIC and call the count function
 void queryApplicationsByCNIC();
 
