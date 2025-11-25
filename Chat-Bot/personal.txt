@@ -1,0 +1,7 @@
+Loan Type#Max Amount#Installments#Interest Rate#Processing Fee#Down Payment
+Short Term#500,000#12#15%#5,000#50,000
+Medium Term#1,500,000#36#13%#10,000#150,000
+Long Term#3,000,000#60#11%#15,000#300,000
+Emergency#800,000#24#16%#8,000#80,000
+Business#2,500,000#48#12%#20,000#250,000
+Education#2,000,000#42#10%#12,000#200,000

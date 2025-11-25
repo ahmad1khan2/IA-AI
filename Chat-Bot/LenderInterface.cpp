@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <iomanip>
 #include <memory>
+#include <windows.h>  // Add Windows API header
 using namespace std;
 
 // Helper: split a string by a delimiter
@@ -20,17 +21,61 @@ static vector<string> splitTokens(const string& s, char delim = '#') {
     return out;
 }
 
+// Helper function for Windows file locking
+static bool lockFile(HANDLE fileHandle) {
+    OVERLAPPED overlapped = { 0 };
+    return LockFileEx(fileHandle, LOCKFILE_EXCLUSIVE_LOCK, 0, MAXDWORD, MAXDWORD, &overlapped);
+}
+
+static bool unlockFile(HANDLE fileHandle) {
+    OVERLAPPED overlapped = { 0 };
+    return UnlockFileEx(fileHandle, 0, MAXDWORD, MAXDWORD, &overlapped);
+}
+
 // Read all applications from file into unique_ptr<Applicant> objects
 vector<unique_ptr<Applicant>> readApplications(const string& path) {
     vector<unique_ptr<Applicant>> apps;
-    ifstream in(path);
-    if (!in) {
-        cerr << "Error: cannot open " << path << " for reading.\n";
+
+    // Open file with Windows HANDLE for locking
+    HANDLE hFile = CreateFileA(
+        path.c_str(),
+        GENERIC_READ,
+        0,  // No sharing while we have the lock
+        NULL,
+        OPEN_EXISTING,
+        FILE_ATTRIBUTE_NORMAL,
+        NULL
+    );
+
+    if (hFile == INVALID_HANDLE_VALUE) {
+        cerr << "Error: cannot open " << path << " for reading. Error: " << GetLastError() << '\n';
         return apps;
     }
 
+    // Acquire exclusive lock
+    if (!lockFile(hFile)) {
+        cerr << "Error: cannot lock " << path << " for reading. Error: " << GetLastError() << '\n';
+        CloseHandle(hFile);
+        return apps;
+    }
+
+    // Now read the file content
+    stringstream fileContent;
+    char buffer[4096];
+    DWORD bytesRead;
+
+    while (ReadFile(hFile, buffer, sizeof(buffer) - 1, &bytesRead, NULL) && bytesRead > 0) {
+        buffer[bytesRead] = '\0';
+        fileContent << buffer;
+    }
+
+    // Release lock and close handle
+    unlockFile(hFile);
+    CloseHandle(hFile);
+
+    // Parse the content from stringstream
     string line;
-    while (getline(in, line)) {
+    while (getline(fileContent, line)) {
         if (line.empty()) continue;
         vector<string> t = splitTokens(line, '#');
         // Need at least 15 fields + one existing-loan(6) + 5 + 5 + 1 = 32 fields for full data
@@ -102,31 +147,32 @@ vector<unique_ptr<Applicant>> readApplications(const string& path) {
 
 // Convert an Applicant back to file-format line
 string applicantToLine(const Applicant& a) {
+    // ... existing code remains exactly the same ...
     stringstream ss;
     ss << a.applicationId << '#'
-       << a.fullName << '#'
-       << a.fathersName << '#'
-       << a.postalAddress << '#'
-       << a.contactNumber << '#'
-       << a.email << '#'
-       << a.cnic << '#'
-       << a.cnicExpiry << '#'
-       << a.employmentStatus << '#'
-       << a.maritalStatus << '#'
-       << a.gender << '#'
-       << a.dependents << '#'
-       << a.annualIncome << '#'
-       << a.avgElectricityBill << '#'
-       << a.currentElectricityBill << '#';
+        << a.fullName << '#'
+        << a.fathersName << '#'
+        << a.postalAddress << '#'
+        << a.contactNumber << '#'
+        << a.email << '#'
+        << a.cnic << '#'
+        << a.cnicExpiry << '#'
+        << a.employmentStatus << '#'
+        << a.maritalStatus << '#'
+        << a.gender << '#'
+        << a.dependents << '#'
+        << a.annualIncome << '#'
+        << a.avgElectricityBill << '#'
+        << a.currentElectricityBill << '#';
 
     // existing loans (each contributes 6 fields)
     for (const auto& L : a.existingLoans) {
         ss << L.loanStatus << '#'
-           << L.totalAmount << '#'
-           << L.amountReturned << '#'
-           << L.amountDue << '#'
-           << L.bankName << '#'
-           << L.loanCategory << '#';
+            << L.totalAmount << '#'
+            << L.amountReturned << '#'
+            << L.amountDue << '#'
+            << L.bankName << '#'
+            << L.loanCategory << '#';
     }
 
     // ensure at least one existing-loan block exists in the file to match expected format.
@@ -137,16 +183,16 @@ string applicantToLine(const Applicant& a) {
 
     // referees
     ss << a.referee1.name << '#'
-       << a.referee1.cnic << '#'
-       << a.referee1.issueDate << '#'
-       << a.referee1.phone << '#'
-       << a.referee1.email << '#';
+        << a.referee1.cnic << '#'
+        << a.referee1.issueDate << '#'
+        << a.referee1.phone << '#'
+        << a.referee1.email << '#';
 
     ss << a.referee2.name << '#'
-       << a.referee2.cnic << '#'
-       << a.referee2.issueDate << '#'
-       << a.referee2.phone << '#'
-       << a.referee2.email << '#';
+        << a.referee2.cnic << '#'
+        << a.referee2.issueDate << '#'
+        << a.referee2.phone << '#'
+        << a.referee2.email << '#';
 
     // status
     ss << a.status;
@@ -156,17 +202,50 @@ string applicantToLine(const Applicant& a) {
 
 // Write vector of unique_ptr<Applicant> back to applications file (overwrite)
 bool writeApplications(const string& path, const vector<unique_ptr<Applicant>>& apps) {
-    ofstream out(path, ios::trunc);
-    if (!out) {
-        cerr << "Error: cannot open " << path << " for writing.\n";
+    // Open file with Windows HANDLE for locking
+    HANDLE hFile = CreateFileA(
+        path.c_str(),
+        GENERIC_WRITE,
+        0,  // No sharing while we have the lock
+        NULL,
+        CREATE_ALWAYS,  // Overwrite existing file
+        FILE_ATTRIBUTE_NORMAL,
+        NULL
+    );
+
+    if (hFile == INVALID_HANDLE_VALUE) {
+        cerr << "Error: cannot open " << path << " for writing. Error: " << GetLastError() << '\n';
         return false;
     }
-    for (size_t i = 0; i < apps.size(); ++i) {
-        out << applicantToLine(*apps[i]);
-        if (i + 1 < apps.size()) out << '\n';
+
+    // Acquire exclusive lock
+    if (!lockFile(hFile)) {
+        cerr << "Error: cannot lock " << path << " for writing. Error: " << GetLastError() << '\n';
+        CloseHandle(hFile);
+        return false;
     }
+
+    // Write content to file
+    DWORD bytesWritten;
+    for (size_t i = 0; i < apps.size(); ++i) {
+        string line = applicantToLine(*apps[i]);
+        if (i + 1 < apps.size()) line += '\n';
+
+        if (!WriteFile(hFile, line.c_str(), line.length(), &bytesWritten, NULL)) {
+            cerr << "Error writing to file. Error: " << GetLastError() << '\n';
+            unlockFile(hFile);
+            CloseHandle(hFile);
+            return false;
+        }
+    }
+
+    // Release lock and close handle
+    unlockFile(hFile);
+    CloseHandle(hFile);
     return true;
 }
+
+
 
 // Print a brief list (index, id, name, status)
 void printApplicationsList(const vector<unique_ptr<Applicant>>& apps) {
@@ -287,8 +366,8 @@ void runLenderInterface(const string& path = "applications.txt") {
     }
 }
 
-int main()
-{
-    runLenderInterface();
-    return 0;
-}
+//int main()
+//{
+//    runLenderInterface();
+//    return 0;
+//}

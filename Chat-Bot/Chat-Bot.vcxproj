@@ -143,6 +143,7 @@
     <Text Include="..\..\..\..\..\Home.txt" />
     <Text Include="..\..\..\..\..\Scooter.txt" />
     <Text Include="applications.txt" />
+    <Text Include="personal.txt" />
     <Text Include="Utterances.txt" />
   </ItemGroup>
   <ItemGroup>
