@@ -29,20 +29,159 @@ Referee::Referee(string n, string c, string date, string p, string e) {
 
 // Applicant constructor 
 Applicant::Applicant() {
-    status = "submitted";
+    status = "C0"; // Start with not started
+    isExiting = false;  
 }
 
-// collectData 
+// Multi-session application system
 void Applicant::collectData() {
-    cout << "\n=== LOAN APPLICATION FORM ===" << endl;
+    cout << "\n=== LOAN APPLICATION SYSTEM ===" << endl;
+    cout << "1. Start New Application" << endl;
+    cout << "2. Resume Existing Application" << endl;
+    cout << "Enter choice (1-2): ";
+
+    string choice;
+    getline(cin, choice);
+
+    if (choice == "1") {
+        // Start new application
+        applicationId = Parser::generateApplicationId();
+        status = "C0";
+
+        try {
+            startNewApplication();
+        }
+        catch (const runtime_error& e) {
+            // Exception already handled in checkForExit
+            return;
+        }
+    }
+    else if (choice == "2") {
+        // Resume existing application
+        resumeApplication();
+    }
+    else {
+        cout << "Invalid choice. Returning to main menu." << endl;
+        return;
+    }
+}
+void Applicant::startNewApplication() {
+    cout << "\nStarting new application. Your Application ID: " << applicationId << endl;
 
     // Personal Information
-   
+    cout << "\n=== PERSONAL INFORMATION SECTION ===" << endl;
+    collectPersonalInfo();
+    saveCheckpoint("C1");
+
+    // Financial Information
+    cout << "\n=== FINANCIAL INFORMATION SECTION ===" << endl;
+    collectFinancialInfo();
+    saveCheckpoint("C2");
+
+    // References
+    cout << "\n=== REFERENCES SECTION ===" << endl;
+    collectReferences();
+    saveCheckpoint("C3");
+
+    // Documents
+    cout << "\n=== DOCUMENTS SECTION ===" << endl;
+    collectDocuments();
+    saveCheckpoint("Submitted");
+
+    cout << "Application submitted successfully! Your Application ID: " << applicationId << endl;
+}
+
+void Applicant::resumeApplication() {
+    string appId, cnicInput;
+
+    cout << "\n=== RESUME APPLICATION ===" << endl;
+    cout << "Enter Application ID: ";
+    getline(cin, appId);
+    cout << "Enter CNIC: ";
+    getline(cin, cnicInput);
+
+    if (loadApplication(appId, cnicInput)) {
+        cout << "Application loaded successfully!" << endl;
+        showCurrentData();
+        continueApplication();
+    }
+    else {
+        cout << "Error: Application not found or already completed." << endl;
+    }
+}
+
+void Applicant::continueApplication() {
+    try {
+        if (status == "C0" || status == "C1") {
+            cout << "\n=== PERSONAL INFORMATION SECTION ===" << endl;
+            if (status == "C1") {
+                cout << "This section is already completed. Do you want to edit it? (yes/no): ";
+                string edit;
+                getline(cin, edit);
+                if (edit == "yes" || edit == "y") {
+                    collectPersonalInfo();
+                }
+            }
+            else {
+                collectPersonalInfo();
+            }
+            saveCheckpoint("C1");
+        }
+
+        if (status == "C1" || status == "C2") {
+            cout << "\n=== FINANCIAL INFORMATION SECTION ===" << endl;
+            if (status == "C2") {
+                cout << "This section is already completed. Do you want to edit it? (yes/no): ";
+                string edit;
+                getline(cin, edit);
+                if (edit == "yes" || edit == "y") {
+                    collectFinancialInfo();
+                }
+            }
+            else {
+                collectFinancialInfo();
+            }
+            saveCheckpoint("C2");
+        }
+
+        if (status == "C2" || status == "C3") {
+            cout << "\n=== REFERENCES SECTION ===" << endl;
+            if (status == "C3") {
+                cout << "This section is already completed. Do you want to edit it? (yes/no): ";
+                string edit;
+                getline(cin, edit);
+                if (edit == "yes" || edit == "y") {
+                    collectReferences();
+                }
+            }
+            else {
+                collectReferences();
+            }
+            saveCheckpoint("C3");
+        }
+
+        cout << "\n=== DOCUMENTS SECTION ===" << endl;
+        collectDocuments();
+        saveCheckpoint("Submitted");
+        cout << "Application submitted successfully! Your Application ID: " << applicationId << endl;
+
+    }
+    catch (const runtime_error& e) {
+        // Exit gracefully - already handled in checkForExit
+        return;
+    }
+}
+
+// collectPersonalInfo 
+void Applicant::collectPersonalInfo() {
+    cout << "\n=== PERSONAL INFORMATION ===" << endl;
+    cout << "Type 'exit' at any time to save and leave application." << endl;
 
     // Full Name 
     do {
         cout << "Full Name: ";
         getline(cin, fullName);
+        checkForExit(fullName, "C0");
         if (!isValidName(fullName)) {
             cout << "Error: Name must contain only alphabets and spaces" << endl;
         }
@@ -52,6 +191,7 @@ void Applicant::collectData() {
     do {
         cout << "Father's Name: ";
         getline(cin, fathersName);
+        checkForExit(fathersName, "C0");
         if (!isValidName(fathersName)) {
             cout << "Error: Name must contain only alphabets and spaces" << endl;
         }
@@ -61,6 +201,7 @@ void Applicant::collectData() {
     do {
         cout << "Postal Address: ";
         getline(cin, postalAddress);
+        checkForExit(postalAddress, "C0");
         if (!isValidPostalCode(postalAddress)) {
             cout << "Error: Postal code must be 5 digits" << endl;
         }
@@ -70,6 +211,7 @@ void Applicant::collectData() {
     do {
         cout << "Contact Number: ";
         getline(cin, contactNumber);
+        checkForExit(contactNumber, "C0");
         if (!isValidPhone(contactNumber)) {
             cout << "Error: Phone number must be 11 digits. Example: 03001234567" << endl;
         }
@@ -79,6 +221,7 @@ void Applicant::collectData() {
     do {
         cout << "Email Address: ";
         getline(cin, email);
+        checkForExit(email, "C0");
         if (!isValidEmail(email)) {
             cout << "Error: Please enter a valid email address. Example: user@example.com" << endl;
         }
@@ -88,16 +231,17 @@ void Applicant::collectData() {
     do {
         cout << "CNIC (without dashes): ";
         getline(cin, cnic);
-        if (!Parser::isValidCNIC(cnic)) {  
+        checkForExit(cnic, "C0");
+        if (!Parser::isValidCNIC(cnic)) {
             cout << "Error: CNIC must be 13 digits without dashes. Example: 1234567890123" << endl;
         }
-    } while (!Parser::isValidCNIC(cnic));  
-
+    } while (!Parser::isValidCNIC(cnic));
 
     // CNIC Expiry
     do {
         cout << "CNIC Expiry Date (DD-MM-YYYY): ";
         getline(cin, cnicExpiry);
+        checkForExit(cnicExpiry, "C0");
         if (!isValidDate(cnicExpiry)) {
             cout << "Error: Date must be in DD-MM-YYYY format. Example: 15-08-2030" << endl;
         }
@@ -105,32 +249,67 @@ void Applicant::collectData() {
 
     // Employment Status
     do {
-        cout << "Employment Status (Self-employed/salaried/retired/unemployed): ";
+        cout << "Employment Status:\n";
+        cout << "1. Self-employed\n2. Salaried\n3. Retired\n4. Unemployed\n";
+        cout << "Enter choice (1-4): ";
         getline(cin, employmentStatus);
+        checkForExit(employmentStatus, "C0");
+
+        if (employmentStatus == "1") employmentStatus = "Self-employed";
+        else if (employmentStatus == "2") employmentStatus = "Salaried";
+        else if (employmentStatus == "3") employmentStatus = "Retired";
+        else if (employmentStatus == "4") employmentStatus = "Unemployed";
+        else {
+            cout << "Error: Please enter a number between 1-4" << endl;
+            continue;
+        }
+
         if (!isValidEmploymentStatus(employmentStatus)) {
-            cout << "Error: Please enter: Self-employed, salaried, retired, or unemployed" << endl;
+            cout << "Error: Invalid employment status selection" << endl;
         }
     } while (!isValidEmploymentStatus(employmentStatus));
 
     // Marital Status
     do {
-        cout << "Marital Status (Single/Married/Divorced/Widowed): ";
+        cout << "Marital Status:\n";
+        cout << "1. Single\n2. Married\n3. Divorced\n4. Widowed\n";
+        cout << "Enter choice (1-4): ";
         getline(cin, maritalStatus);
+        checkForExit(maritalStatus, "C0");
+
+        if (maritalStatus == "1") maritalStatus = "Single";
+        else if (maritalStatus == "2") maritalStatus = "Married";
+        else if (maritalStatus == "3") maritalStatus = "Divorced";
+        else if (maritalStatus == "4") maritalStatus = "Widowed";
+        else {
+            cout << "Error: Please enter a number between 1-4" << endl;
+            continue;
+        }
+
         if (!isValidMaritalStatus(maritalStatus)) {
-            cout << "Error: Please enter: Single, Married, Divorced, or Widowed" << endl;
+            cout << "Error: Invalid marital status selection" << endl;
         }
     } while (!isValidMaritalStatus(maritalStatus));
 
     cout << "Gender: ";
     getline(cin, gender);
+    checkForExit(gender, "C0");
 
     cout << "Number of Dependents: ";
     getline(cin, dependents);
+    checkForExit(dependents, "C0");
+}
+
+// collectFinancialInfo 
+void Applicant::collectFinancialInfo() {
+    cout << "\n=== FINANCIAL INFORMATION ===" << endl;
+    cout << "Type 'exit' at any time to save and leave application." << endl;
 
     // Annual Income
     do {
         cout << "Annual Income (PKR without commas): ";
         getline(cin, annualIncome);
+        checkForExit(annualIncome, "C1");
         if (!isValidNumeric(annualIncome)) {
             cout << "Error: Income must contain only numbers without commas" << endl;
         }
@@ -140,6 +319,7 @@ void Applicant::collectData() {
     do {
         cout << "Monthly Average Electricity Bill (PKR): ";
         getline(cin, avgElectricityBill);
+        checkForExit(avgElectricityBill, "C1");
         if (!isValidNumeric(avgElectricityBill)) {
             cout << "Error: Bill amount must contain only numbers without commas" << endl;
         }
@@ -149,6 +329,7 @@ void Applicant::collectData() {
     do {
         cout << "Current Electricity Bill Amount (PKR): ";
         getline(cin, currentElectricityBill);
+        checkForExit(currentElectricityBill, "C1");
         if (!isValidNumeric(currentElectricityBill)) {
             cout << "Error: Bill amount must contain only numbers without commas" << endl;
         }
@@ -161,6 +342,7 @@ void Applicant::collectData() {
 
     while (!validLoanResponse) {
         getline(cin, hasLoans);
+        checkForExit(hasLoans, "C1");
 
         if (hasLoans == "yes") {
             validLoanResponse = true;
@@ -168,10 +350,21 @@ void Applicant::collectData() {
 
             // Loan Status
             do {
-                cout << "Loan Status (Active/Inactive): ";
+                cout << "Loan Status:\n";
+                cout << "1. Active\n2. Inactive\n";
+                cout << "Enter choice (1-2): ";
                 getline(cin, status);
+                checkForExit(status, "C1");
+
+                if (status == "1") status = "Active";
+                else if (status == "2") status = "Inactive";
+                else {
+                    cout << "Error: Please enter 1 or 2" << endl;
+                    continue;
+                }
+
                 if (!isValidLoanStatus(status)) {
-                    cout << "Error: Please enter: Active or Inactive" << endl;
+                    cout << "Error: Invalid loan status selection" << endl;
                 }
             } while (!isValidLoanStatus(status));
 
@@ -179,6 +372,7 @@ void Applicant::collectData() {
             do {
                 cout << "Total Loan Amount: ";
                 getline(cin, total);
+                checkForExit(total, "C1");
                 if (!isValidNumeric(total)) {
                     cout << "Error: Amount must contain only numbers without commas" << endl;
                 }
@@ -188,6 +382,7 @@ void Applicant::collectData() {
             do {
                 cout << "Amount Returned: ";
                 getline(cin, returned);
+                checkForExit(returned, "C1");
                 if (!isValidNumeric(returned)) {
                     cout << "Error: Amount must contain only numbers without commas" << endl;
                 }
@@ -197,6 +392,7 @@ void Applicant::collectData() {
             do {
                 cout << "Amount Still Due: ";
                 getline(cin, due);
+                checkForExit(due, "C1");
                 if (!isValidNumeric(due)) {
                     cout << "Error: Amount must contain only numbers without commas" << endl;
                 }
@@ -204,13 +400,26 @@ void Applicant::collectData() {
 
             cout << "Bank Name: ";
             getline(cin, bank);
+            checkForExit(bank, "C1");
 
             // Loan Category
             do {
-                cout << "Loan Category (Car/Home/Scooter): ";
+                cout << "Loan Category:\n";
+                cout << "1. Car\n2. Home\n3. Scooter\n";
+                cout << "Enter choice (1-3): ";
                 getline(cin, category);
+                checkForExit(category, "C1");
+
+                if (category == "1") category = "Car";
+                else if (category == "2") category = "Home";
+                else if (category == "3") category = "Scooter";
+                else {
+                    cout << "Error: Please enter a number between 1-3" << endl;
+                    continue;
+                }
+
                 if (!isValidLoanCategory(category)) {
-                    cout << "Error: Please enter: Car, Home, or Scooter" << endl;
+                    cout << "Error: Invalid loan category selection" << endl;
                 }
             } while (!isValidLoanCategory(category));
 
@@ -224,26 +433,33 @@ void Applicant::collectData() {
             cout << "Invalid input. Please enter 'yes' or 'no': ";
         }
     }
+}
 
-    // References
+// collectReferences 
+void Applicant::collectReferences() {
+    cout << "\n=== REFERENCES ===" << endl;
+    cout << "Type 'exit' at any time to save and leave application." << endl;
+
     cout << "\n=== REFERENCE 1 ===" << endl;
     cout << "Name: ";
     getline(cin, referee1.name);
+    checkForExit(referee1.name, "C2");
 
     // Referee 1 CNIC 
     do {
         cout << "CNIC (without dashes): ";
-        getline(cin, cnic);
-        if (!Parser::isValidCNIC(cnic)) {
+        getline(cin, referee1.cnic);
+        checkForExit(referee1.cnic, "C2");
+        if (!Parser::isValidCNIC(referee1.cnic)) {
             cout << "Error: CNIC must be 13 digits without dashes. Example: 1234567890123" << endl;
         }
-    } while (!Parser::isValidCNIC(cnic));
-
+    } while (!Parser::isValidCNIC(referee1.cnic));
 
     // Referee 1 Issue Date
     do {
         cout << "CNIC Issue Date (DD-MM-YYYY): ";
         getline(cin, referee1.issueDate);
+        checkForExit(referee1.issueDate, "C2");
         if (!isValidDate(referee1.issueDate)) {
             cout << "Error: Date must be in DD-MM-YYYY format. Example: 15-08-2030" << endl;
         }
@@ -253,6 +469,7 @@ void Applicant::collectData() {
     do {
         cout << "Phone Number: ";
         getline(cin, referee1.phone);
+        checkForExit(referee1.phone, "C2");
         if (!isValidPhone(referee1.phone)) {
             cout << "Error: Phone number must be 11 digits. Example: 03001234567" << endl;
         }
@@ -262,6 +479,7 @@ void Applicant::collectData() {
     do {
         cout << "Email: ";
         getline(cin, referee1.email);
+        checkForExit(referee1.email, "C2");
         if (!isValidEmail(referee1.email)) {
             cout << "Error: Please enter a valid email address. Example: user@example.com" << endl;
         }
@@ -270,20 +488,23 @@ void Applicant::collectData() {
     cout << "\n=== REFERENCE 2 ===" << endl;
     cout << "Name: ";
     getline(cin, referee2.name);
+    checkForExit(referee2.name, "C2");
 
     // Referee 2 CNIC
     do {
         cout << "CNIC (without dashes): ";
-        getline(cin, cnic);
-        if (!Parser::isValidCNIC(cnic)) {
+        getline(cin, referee2.cnic);
+        checkForExit(referee2.cnic, "C2");
+        if (!Parser::isValidCNIC(referee2.cnic)) {
             cout << "Error: CNIC must be 13 digits without dashes. Example: 1234567890123" << endl;
         }
-    } while (!Parser::isValidCNIC(cnic));
+    } while (!Parser::isValidCNIC(referee2.cnic));
 
     // Referee 2 Issue Date
     do {
         cout << "CNIC Issue Date (DD-MM-YYYY): ";
         getline(cin, referee2.issueDate);
+        checkForExit(referee2.issueDate, "C2");
         if (!isValidDate(referee2.issueDate)) {
             cout << "Error: Date must be in DD-MM-YYYY format. Example: 15-08-2030" << endl;
         }
@@ -293,6 +514,7 @@ void Applicant::collectData() {
     do {
         cout << "Phone Number: ";
         getline(cin, referee2.phone);
+        checkForExit(referee2.phone, "C2");
         if (!isValidPhone(referee2.phone)) {
             cout << "Error: Phone number must be 11 digits. Example: 03001234567" << endl;
         }
@@ -302,45 +524,39 @@ void Applicant::collectData() {
     do {
         cout << "Email: ";
         getline(cin, referee2.email);
+        checkForExit(referee2.email, "C2");
         if (!isValidEmail(referee2.email)) {
             cout << "Error: Please enter a valid email address. Example: user@example.com" << endl;
         }
     } while (!isValidEmail(referee2.email));
+}
 
-    //Confirmation and file saving
-    showApplicationSummary();
+// collectDocuments 
+void Applicant::collectDocuments() {
+    handleImageUpload();
+}
 
-    cout << "\nDo you want to submit this application? (yes/no): ";
-    string confirm;
-    bool validConfirm = false;
+void Applicant::saveCheckpoint(const string& checkpointStatus) {
+    status = checkpointStatus;
+    if (Parser::saveApplicationToFile(toFileString())) {
+        cout << "Progress saved successfully! Current status: " << status << endl;
+    }
+    else {
+        cout << "Error saving progress." << endl;
+    }
+}
 
-    while (!validConfirm) {
-        getline(cin, confirm);
+bool Applicant::loadApplication(const string& appId, const string& cnicInput) {
+    return Parser::loadApplication(appId, cnicInput, *this);
+}
 
-        if (confirm == "yes") {
-            validConfirm = true;
-            applicationId = Parser::generateApplicationId();  // Changed to use Parser
-            handleImageUpload();
+void Applicant::showCurrentData() {
+    cout << "\n=== CURRENT APPLICATION DATA ===" << endl;
+    cout << "Application ID: " << applicationId << endl;
+    cout << "Current Status: " << status << endl;
 
-            // Check if ALL images were uploaded successfully before saving
-            bool allImagesUploaded = (cnicFrontPath != "NOT_UPLOADED" &&
-                cnicBackPath != "NOT_UPLOADED" &&
-                electricityBillPath != "NOT_UPLOADED" &&
-                salarySlipPath != "NOT_UPLOADED");
-
-            if (allImagesUploaded) {
-                if (Parser::saveApplicationToFile(toFileString())) {  // Changed to use Parser
-                    cout << "Application submitted successfully! Your Application ID: " << applicationId << endl;
-                }
-                else {
-                    cout << "Error saving application. Please try again." << endl;
-                }
-            }
-            else {
-                // Reset application ID since it wasn't successfully submitted
-                applicationId = "";
-            }
-        }
+    if (status >= "C1") {
+        cout << "Personal Info: " << fullName << ", " << cnic << endl;
     }
 }
 
@@ -358,17 +574,27 @@ string Applicant::toFileString() {
     string data = "";
 
     // Personal Information
-    data += applicationId + "#" + fullName + "#" + fathersName + "#" +
-        postalAddress + "#" + contactNumber + "#" + email + "#" +
-        cnic + "#" + cnicExpiry + "#" + employmentStatus + "#" +
-        maritalStatus + "#" + gender + "#" + dependents + "#";
+    data += applicationId + "#" +
+        (fullName.empty() ? "NOT_PROVIDED" : fullName) + "#" +
+        (fathersName.empty() ? "NOT_PROVIDED" : fathersName) + "#" +
+        (postalAddress.empty() ? "NOT_PROVIDED" : postalAddress) + "#" +
+        (contactNumber.empty() ? "NOT_PROVIDED" : contactNumber) + "#" +
+        (email.empty() ? "NOT_PROVIDED" : email) + "#" +
+        (cnic.empty() ? "NOT_PROVIDED" : cnic) + "#" +
+        (cnicExpiry.empty() ? "NOT_PROVIDED" : cnicExpiry) + "#" +
+        (employmentStatus.empty() ? "NOT_PROVIDED" : employmentStatus) + "#" +
+        (maritalStatus.empty() ? "NOT_PROVIDED" : maritalStatus) + "#" +
+        (gender.empty() ? "NOT_PROVIDED" : gender) + "#" +
+        (dependents.empty() ? "NOT_PROVIDED" : dependents) + "#";
 
     // Financial Information  
-    data += annualIncome + "#" + avgElectricityBill + "#" + currentElectricityBill + "#";
+    data += (annualIncome.empty() ? "0" : annualIncome) + "#" +
+        (avgElectricityBill.empty() ? "0" : avgElectricityBill) + "#" +
+        (currentElectricityBill.empty() ? "0" : currentElectricityBill) + "#";
 
     // Existing Loans 
     if (existingLoans.empty()) {
-        data += "No#No#No#No#No#No#";  //"No" for all loan fields
+        data += "NO_LOAN#NO_LOAN#NO_LOAN#NO_LOAN#NO_LOAN#NO_LOAN#";
     }
     else {
         data += existingLoans[0].loanStatus + "#" + existingLoans[0].totalAmount + "#" +
@@ -377,15 +603,24 @@ string Applicant::toFileString() {
     }
 
     // References
-    data += referee1.name + "#" + referee1.cnic + "#" + referee1.issueDate + "#" +
-        referee1.phone + "#" + referee1.email + "#" +
-        referee2.name + "#" + referee2.cnic + "#" + referee2.issueDate + "#" +
-        referee2.phone + "#" + referee2.email + "#";
-    // Image Paths
-    data += cnicFrontPath + "#" + cnicBackPath + "#" +
-        electricityBillPath + "#" + salarySlipPath + "#";
+    data += (referee1.name.empty() ? "NOT_PROVIDED" : referee1.name) + "#" +
+        (referee1.cnic.empty() ? "NOT_PROVIDED" : referee1.cnic) + "#" +
+        (referee1.issueDate.empty() ? "NOT_PROVIDED" : referee1.issueDate) + "#" +
+        (referee1.phone.empty() ? "NOT_PROVIDED" : referee1.phone) + "#" +
+        (referee1.email.empty() ? "NOT_PROVIDED" : referee1.email) + "#" +
+        (referee2.name.empty() ? "NOT_PROVIDED" : referee2.name) + "#" +
+        (referee2.cnic.empty() ? "NOT_PROVIDED" : referee2.cnic) + "#" +
+        (referee2.issueDate.empty() ? "NOT_PROVIDED" : referee2.issueDate) + "#" +
+        (referee2.phone.empty() ? "NOT_PROVIDED" : referee2.phone) + "#" +
+        (referee2.email.empty() ? "NOT_PROVIDED" : referee2.email) + "#";
 
-    // Status
+    // Image Paths (fields 27-30)
+    data += (cnicFrontPath.empty() ? "NOT_UPLOADED" : cnicFrontPath) + "#" +
+        (cnicBackPath.empty() ? "NOT_UPLOADED" : cnicBackPath) + "#" +
+        (electricityBillPath.empty() ? "NOT_UPLOADED" : electricityBillPath) + "#" +
+        (salarySlipPath.empty() ? "NOT_UPLOADED" : salarySlipPath) + "#";
+
+    // Status (field 31)
     data += status;
 
     return data;
@@ -396,6 +631,7 @@ void Applicant::addExistingLoan(string status, string total, string returned, st
     ExistingLoan loan(status, total, returned, due, bank, category);
     existingLoans.push_back(loan);
 }
+
 // handleImageUpload
 void Applicant::handleImageUpload() {
     string imagePath;
@@ -403,21 +639,19 @@ void Applicant::handleImageUpload() {
     vector<string> failedUploads;
 
     cout << "\n=== IMAGE UPLOAD ===" << endl;
-
-    // Track upload results first without creating folder
-    string cnicFrontResult, cnicBackResult, electricityBillResult, salarySlipResult;
+    cout << "Type 'exit' at any time to save and leave application." << endl;
 
     // CNIC Front
     cout << "Enter path for CNIC Front image: ";
     getline(cin, imagePath);
+    checkForExit(imagePath, "C3");
     if (!imagePath.empty() && imagePath.front() == '"' && imagePath.back() == '"') {
         imagePath = imagePath.substr(1, imagePath.length() - 2);
     }
     if (copyFile(imagePath, "./temp_cnic_front.jpg")) {
-        cnicFrontResult = "UPLOADED";
+        // Success
     }
     else {
-        cnicFrontResult = "NOT_UPLOADED";
         allUploaded = false;
         failedUploads.push_back("CNIC Front");
     }
@@ -425,14 +659,14 @@ void Applicant::handleImageUpload() {
     // CNIC Back
     cout << "Enter path for CNIC Back image: ";
     getline(cin, imagePath);
+    checkForExit(imagePath, "C3");
     if (!imagePath.empty() && imagePath.front() == '"' && imagePath.back() == '"') {
         imagePath = imagePath.substr(1, imagePath.length() - 2);
     }
     if (copyFile(imagePath, "./temp_cnic_back.jpg")) {
-        cnicBackResult = "UPLOADED";
+        // Success
     }
     else {
-        cnicBackResult = "NOT_UPLOADED";
         allUploaded = false;
         failedUploads.push_back("CNIC Back");
     }
@@ -440,14 +674,14 @@ void Applicant::handleImageUpload() {
     // Electricity Bill
     cout << "Enter path for Electricity Bill image: ";
     getline(cin, imagePath);
+    checkForExit(imagePath, "C3");
     if (!imagePath.empty() && imagePath.front() == '"' && imagePath.back() == '"') {
         imagePath = imagePath.substr(1, imagePath.length() - 2);
     }
     if (copyFile(imagePath, "./temp_electricity_bill.jpg")) {
-        electricityBillResult = "UPLOADED";
+        // Success
     }
     else {
-        electricityBillResult = "NOT_UPLOADED";
         allUploaded = false;
         failedUploads.push_back("Electricity Bill");
     }
@@ -455,14 +689,14 @@ void Applicant::handleImageUpload() {
     // Salary Slip
     cout << "Enter path for Salary Slip/Bank Statement image: ";
     getline(cin, imagePath);
+    checkForExit(imagePath, "C3");
     if (!imagePath.empty() && imagePath.front() == '"' && imagePath.back() == '"') {
         imagePath = imagePath.substr(1, imagePath.length() - 2);
     }
     if (copyFile(imagePath, "./temp_salary_slip.jpg")) {
-        salarySlipResult = "UPLOADED";
+        // Success
     }
     else {
-        salarySlipResult = "NOT_UPLOADED";
         allUploaded = false;
         failedUploads.push_back("Salary Slip");
     }
@@ -494,7 +728,7 @@ void Applicant::handleImageUpload() {
         remove("./temp_electricity_bill.jpg");
         remove("./temp_salary_slip.jpg");
 
-        cout << "All images uploaded successfully! Application submitted." << endl;
+        cout << "All images uploaded successfully!" << endl;
     }
     else {
         // Set paths to NOT_UPLOADED
@@ -514,9 +748,10 @@ void Applicant::handleImageUpload() {
         for (const auto& doc : failedUploads) {
             cout << "  - " << doc << endl;
         }
-        cout << "\nPlease submit your application again or return to main menu." << endl;
+        cout << "\nYou can complete document upload when you resume the application." << endl;
     }
 }
+
 // copyFile - HELPER FUNCTION
 bool Applicant::copyFile(const string& sourcePath, const string& destPath) {
     ifstream source(sourcePath, ios::binary);
@@ -538,6 +773,18 @@ bool Applicant::copyFile(const string& sourcePath, const string& destPath) {
     return true;
 }
 
+// Helper function to check for exit command
+void Applicant::checkForExit(const string& input, const string& currentStatus) {
+    if (input == "exit" || input == "quit") {
+        if (!isExiting) {
+            isExiting = true;
+            saveCheckpoint(currentStatus);
+            cout << "Application saved. You can resume later with AppID: " << applicationId << endl;
+            cout << "Returning to main menu..." << endl;
+            throw runtime_error("exit_application");
+        }
+    }
+}
 // ============================
 // INPUT VALIDATION FUNCTIONS 
 // ============================
@@ -602,7 +849,7 @@ bool isValidMaritalStatus(const string& status) {
 }
 
 // Loan status validation
-bool isValidLoanStatus(const string & status) {
+bool isValidLoanStatus(const string& status) {
     string lowerStatus = status;
     transform(lowerStatus.begin(), lowerStatus.end(), lowerStatus.begin(), ::tolower);
     return lowerStatus == "active" || lowerStatus == "inactive";
@@ -614,6 +861,7 @@ bool isValidLoanCategory(const string& category) {
     transform(lowerCategory.begin(), lowerCategory.end(), lowerCategory.begin(), ::tolower);
     return lowerCategory == "car" || lowerCategory == "home" || lowerCategory == "scooter";
 }
+
 bool isValidName(const string& name) {
     if (name.empty()) return false;
     for (char c : name) {
@@ -625,4 +873,23 @@ bool isValidName(const string& name) {
 // Postal code validation - 5 digits
 bool isValidPostalCode(const string& postalCode) {
     return postalCode.length() == 5 && containsOnlyDigits(postalCode);
+}
+
+//Checkpoint Validations
+bool Applicant::validatePersonalInfo() {
+    return !fullName.empty() && !fathersName.empty() && !postalAddress.empty() &&
+        !contactNumber.empty() && !email.empty() && !cnic.empty() &&
+        !cnicExpiry.empty() && !employmentStatus.empty() && !maritalStatus.empty() &&
+        !gender.empty() && !dependents.empty();
+}
+
+bool Applicant::validateFinancialInfo() {
+    return !annualIncome.empty() && !avgElectricityBill.empty() && !currentElectricityBill.empty();
+}
+
+bool Applicant::validateReferences() {
+    return !referee1.name.empty() && !referee1.cnic.empty() && !referee1.issueDate.empty() &&
+        !referee1.phone.empty() && !referee1.email.empty() &&
+        !referee2.name.empty() && !referee2.cnic.empty() && !referee2.issueDate.empty() &&
+        !referee2.phone.empty() && !referee2.email.empty();
 }

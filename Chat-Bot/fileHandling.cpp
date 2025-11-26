@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <stdexcept>
 #include <windows.h>  // Add Windows API header
+#include "applicant.h"
+
 
 using namespace std;
 
@@ -479,10 +481,18 @@ vector<Loan*> Parser::readAllLoans() {
 
 
 bool Parser::saveApplicationToFile(const string& fileData) {
+    // Extract application ID from the file data
+    size_t firstHash = fileData.find('#');
+    string appId = (firstHash != string::npos) ? fileData.substr(0, firstHash) : "";
+
+    if (appId.empty()) {
+        return false;
+    }
+
     // Open file with Windows HANDLE for locking
     HANDLE hFile = CreateFileA(
         "applications.txt",
-        GENERIC_WRITE,
+        GENERIC_READ | GENERIC_WRITE,  // Need both read and write access
         0,  // No sharing while we have the lock
         NULL,
         OPEN_ALWAYS,  // Open existing or create new
@@ -500,19 +510,56 @@ bool Parser::saveApplicationToFile(const string& fileData) {
         return false;
     }
 
-    // Move file pointer to end for appending
-    SetFilePointer(hFile, 0, NULL, FILE_END);
+    // Read existing content
+    stringstream fileContent;
+    char buffer[4096];
+    DWORD bytesRead;
 
-    // Write data with newline
-    string toWrite = fileData + "\n";
-    DWORD bytesWritten;
-    bool success = WriteFile(hFile, toWrite.c_str(), toWrite.length(), &bytesWritten, NULL);
+    SetFilePointer(hFile, 0, NULL, FILE_BEGIN);
+    while (ReadFile(hFile, buffer, sizeof(buffer) - 1, &bytesRead, NULL) && bytesRead > 0) {
+        buffer[bytesRead] = '\0';
+        fileContent << buffer;
+    }
+
+    // Process content to remove duplicates
+    vector<string> lines;
+    string line;
+    while (getline(fileContent, line)) {
+        if (!line.empty()) {
+            // Check if this line has the same application ID
+            size_t lineFirstHash = line.find('#');
+            string lineAppId = (lineFirstHash != string::npos) ? line.substr(0, lineFirstHash) : "";
+
+            // Only keep lines that don't have the same application ID
+            if (lineAppId != appId) {
+                lines.push_back(line);
+            }
+        }
+    }
+
+    // Add the new/updated application data
+    lines.push_back(fileData);
+
+    // Truncate file and write everything back
+    SetFilePointer(hFile, 0, NULL, FILE_BEGIN);
+    SetEndOfFile(hFile);  // Truncate the file
+
+    // Write all lines back
+    for (const auto& l : lines) {
+        string toWrite = l + "\n";
+        DWORD bytesWritten;
+        if (!WriteFile(hFile, toWrite.c_str(), static_cast<DWORD>(toWrite.length()), &bytesWritten, NULL)) {
+            unlockFile(hFile);
+            CloseHandle(hFile);
+            return false;
+        }
+    }
 
     // Release lock and close handle
     unlockFile(hFile);
     CloseHandle(hFile);
 
-    return success;
+    return true;
 }
 
 string Parser::generateApplicationId() {
@@ -673,8 +720,90 @@ void Parser::cleanupLoans(vector<Loan*>& loans) {
     loans.clear();
 }
 
+bool Parser::loadApplication(const string& appId, const string& cnic, Applicant& applicant) {
+    ifstream file("applications.txt");
+    if (!file) {
+        cout << "Error: applications.txt not found!" << endl;
+        return false;
+    }
 
-// Add this function to fileHandling.cpp
+    string line;
+    while (getline(file, line)) {
+        if (line.empty()) continue;
+
+        vector<string> fields;
+        string field;
+        stringstream ss(line);
+
+        // Split by # delimiter
+        while (getline(ss, field, '#')) {
+            fields.push_back(field);
+        }
+
+        // Check for 36 fields total
+        if (fields.size() == 36 && fields[0] == appId && fields[6] == cnic) {
+            string currentStatus = fields[35]; // Status is last field (index 35)
+
+            // Don't allow loading of submitted applications
+            if (currentStatus == "Submitted") {
+                cout << "Error: This application is already submitted and cannot be modified." << endl;
+                file.close();
+                return false;
+            }
+
+            // Load ALL data into applicant object with CORRECT 36-field mapping:
+            applicant.applicationId = fields[0];
+            applicant.fullName = (fields[1] == "NOT_PROVIDED") ? "" : fields[1];
+            applicant.fathersName = (fields[2] == "NOT_PROVIDED") ? "" : fields[2];
+            applicant.postalAddress = (fields[3] == "NOT_PROVIDED") ? "" : fields[3];
+            applicant.contactNumber = (fields[4] == "NOT_PROVIDED") ? "" : fields[4];
+            applicant.email = (fields[5] == "NOT_PROVIDED") ? "" : fields[5];
+            applicant.cnic = fields[6];
+            applicant.cnicExpiry = (fields[7] == "NOT_PROVIDED") ? "" : fields[7];
+            applicant.employmentStatus = (fields[8] == "NOT_PROVIDED") ? "" : fields[8];
+            applicant.maritalStatus = (fields[9] == "NOT_PROVIDED") ? "" : fields[9];
+            applicant.gender = (fields[10] == "NOT_PROVIDED") ? "" : fields[10];
+            applicant.dependents = (fields[11] == "NOT_PROVIDED") ? "" : fields[11];
+            applicant.annualIncome = (fields[12] == "0") ? "" : fields[12];
+            applicant.avgElectricityBill = (fields[13] == "0") ? "" : fields[13];
+            applicant.currentElectricityBill = (fields[14] == "0") ? "" : fields[14];
+
+            // Load existing loans if any
+            applicant.existingLoans.clear();
+            if (fields[15] != "NO_LOAN") {
+                applicant.addExistingLoan(fields[15], fields[16], fields[17], fields[18], fields[19], fields[20]);
+            }
+
+            // Load references (fields 21-30)
+            applicant.referee1.name = (fields[21] == "NOT_PROVIDED") ? "" : fields[21];
+            applicant.referee1.cnic = (fields[22] == "NOT_PROVIDED") ? "" : fields[22];
+            applicant.referee1.issueDate = (fields[23] == "NOT_PROVIDED") ? "" : fields[23];
+            applicant.referee1.phone = (fields[24] == "NOT_PROVIDED") ? "" : fields[24];
+            applicant.referee1.email = (fields[25] == "NOT_PROVIDED") ? "" : fields[25];
+            applicant.referee2.name = (fields[26] == "NOT_PROVIDED") ? "" : fields[26];
+            applicant.referee2.cnic = (fields[27] == "NOT_PROVIDED") ? "" : fields[27];
+            applicant.referee2.issueDate = (fields[28] == "NOT_PROVIDED") ? "" : fields[28];
+            applicant.referee2.phone = (fields[29] == "NOT_PROVIDED") ? "" : fields[29];
+            applicant.referee2.email = (fields[30] == "NOT_PROVIDED") ? "" : fields[30];
+
+            // Load document paths (fields 31-34)
+            applicant.cnicFrontPath = (fields[31] == "NOT_UPLOADED") ? "" : fields[31];
+            applicant.cnicBackPath = (fields[32] == "NOT_UPLOADED") ? "" : fields[32];
+            applicant.electricityBillPath = (fields[33] == "NOT_UPLOADED") ? "" : fields[33];
+            applicant.salarySlipPath = (fields[34] == "NOT_UPLOADED") ? "" : fields[34];
+
+            applicant.status = fields[35];
+
+            file.close();
+            return true;
+        }
+    }
+
+    file.close();
+    cout << "Error: Application not found with ID: " << appId << " and CNIC: " << cnic << endl;
+    return false;
+}
+
 void Parser::loadHumanCorpus(vector<string>& human1Lines, vector<string>& human2Lines) {
     ifstream file("human_chat_corpus.txt");
     if (!file.is_open()) {
@@ -698,6 +827,5 @@ void Parser::loadHumanCorpus(vector<string>& human1Lines, vector<string>& human2
     }
 
     file.close();
-
     cout << "Chatbot: Loaded " << human1Count << " Human1 lines and " << human2Count << " Human2 lines." << endl;
 }
