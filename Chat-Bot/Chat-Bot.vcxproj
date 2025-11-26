@@ -146,6 +146,7 @@
     <Text Include="Home.txt" />
     <Text Include="human_chat_corpus.txt" />
     <Text Include="Scooter.txt" />
+    <Text Include="personal.txt" />
     <Text Include="Utterances.txt" />
   </ItemGroup>
   <ItemGroup>

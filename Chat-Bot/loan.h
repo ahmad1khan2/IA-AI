@@ -88,10 +88,10 @@ public:
 
         // Column headings
         cout << left
-             << setw(8)  << "No."
-             << setw(12) << "Installment"
-             << setw(18) << "Principal Paid"
-             << setw(18) << "Remaining" << '\n';
+            << setw(8) << "No."
+            << setw(12) << "Installment"
+            << setw(18) << "Principal Paid"
+            << setw(18) << "Remaining" << '\n';
         cout << string(70, '-') << '\n';
 
         // Schedule calculation
@@ -117,10 +117,10 @@ public:
             totalPaid += principalThisMonth;
 
             cout << right << setw(4) << month << "   "
-                 << setw(12) << fixed << setprecision(2) << perInstallment << "   "
-                 << setw(12) << fixed << setprecision(2) << principalThisMonth << "   "
-                 << setw(12) << fixed << setprecision(2) << (remaining > 0.0 ? remaining : 0.0)
-                 << '\n';
+                << setw(12) << fixed << setprecision(2) << perInstallment << "   "
+                << setw(12) << fixed << setprecision(2) << principalThisMonth << "   "
+                << setw(12) << fixed << setprecision(2) << (remaining > 0.0 ? remaining : 0.0)
+                << '\n';
         }
 
         cout << string(70, '-') << '\n';
@@ -136,7 +136,7 @@ public:
             "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
             "Jan", "Feb", "Mar", "Apr", "May", "Jun",
             "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-		};
+        };
         // normalize startMonth
         if (startMonth <= 0) startMonth = 1;
 
@@ -165,11 +165,11 @@ public:
 
         // Column headings include Month
         cout << left
-             << setw(8)  << "No."
-             << setw(10) << "Month"
-             << setw(14) << "Installment"
-             << setw(18) << "Principal Paid"
-             << setw(18) << "Remaining" << '\n';
+            << setw(8) << "No."
+            << setw(10) << "Month"
+            << setw(14) << "Installment"
+            << setw(18) << "Principal Paid"
+            << setw(18) << "Remaining" << '\n';
         cout << string(80, '-') << '\n';
 
         // Schedule calculation
@@ -177,11 +177,12 @@ public:
         double totalPaid = 0.0;
 
         for (int i = 1; i <= n; ++i) {
-            string displayMonth = months[((startMonth-1) + (i - 1))%12];
+            string displayMonth = months[((startMonth - 1) + (i - 1)) % 12];
             double principalThisMonth;
             if (i == n) {
                 principalThisMonth = remaining;
-            } else {
+            }
+            else {
                 principalThisMonth = perInstallment;
             }
 
@@ -193,11 +194,11 @@ public:
             totalPaid += principalThisMonth;
 
             cout << right << setw(4) << i << "   "
-                 << setw(6) << displayMonth << "   "
-                 << setw(12) << fixed << setprecision(2) << perInstallment << "   "
-                 << setw(12) << fixed << setprecision(2) << principalThisMonth << "   "
-                 << setw(12) << fixed << setprecision(2) << (remaining > 0.0 ? remaining : 0.0)
-                 << '\n';
+                << setw(6) << displayMonth << "   "
+                << setw(12) << fixed << setprecision(2) << perInstallment << "   "
+                << setw(12) << fixed << setprecision(2) << principalThisMonth << "   "
+                << setw(12) << fixed << setprecision(2) << (remaining > 0.0 ? remaining : 0.0)
+                << '\n';
         }
 
         cout << string(80, '-') << '\n';

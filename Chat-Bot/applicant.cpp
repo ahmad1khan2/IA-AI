@@ -1,4 +1,5 @@
 #include "applicant.h"
+#include "fileHandling.h"
 #include <fstream>
 #include <iostream>
 #include <string>  
@@ -87,10 +88,11 @@ void Applicant::collectData() {
     do {
         cout << "CNIC (without dashes): ";
         getline(cin, cnic);
-        if (!isValidCNIC(cnic)) {
+        if (!Parser::isValidCNIC(cnic)) {  
             cout << "Error: CNIC must be 13 digits without dashes. Example: 1234567890123" << endl;
         }
-    } while (!isValidCNIC(cnic));
+    } while (!Parser::isValidCNIC(cnic));  
+
 
     // CNIC Expiry
     do {
@@ -230,12 +232,13 @@ void Applicant::collectData() {
 
     // Referee 1 CNIC 
     do {
-        cout << "CNIC: ";
-        getline(cin, referee1.cnic);
-        if (!isValidCNIC(referee1.cnic)) {
+        cout << "CNIC (without dashes): ";
+        getline(cin, cnic);
+        if (!Parser::isValidCNIC(cnic)) {
             cout << "Error: CNIC must be 13 digits without dashes. Example: 1234567890123" << endl;
         }
-    } while (!isValidCNIC(referee1.cnic));
+    } while (!Parser::isValidCNIC(cnic));
+
 
     // Referee 1 Issue Date
     do {
@@ -270,12 +273,12 @@ void Applicant::collectData() {
 
     // Referee 2 CNIC
     do {
-        cout << "CNIC: ";
-        getline(cin, referee2.cnic);
-        if (!isValidCNIC(referee2.cnic)) {
+        cout << "CNIC (without dashes): ";
+        getline(cin, cnic);
+        if (!Parser::isValidCNIC(cnic)) {
             cout << "Error: CNIC must be 13 digits without dashes. Example: 1234567890123" << endl;
         }
-    } while (!isValidCNIC(referee2.cnic));
+    } while (!Parser::isValidCNIC(cnic));
 
     // Referee 2 Issue Date
     do {
@@ -316,7 +319,7 @@ void Applicant::collectData() {
 
         if (confirm == "yes") {
             validConfirm = true;
-            applicationId = generateApplicationId();
+            applicationId = Parser::generateApplicationId();  // Changed to use Parser
             handleImageUpload();
 
             // Check if ALL images were uploaded successfully before saving
@@ -326,7 +329,7 @@ void Applicant::collectData() {
                 salarySlipPath != "NOT_UPLOADED");
 
             if (allImagesUploaded) {
-                if (saveToFile()) {
+                if (Parser::saveApplicationToFile(toFileString())) {  // Changed to use Parser
                     cout << "Application submitted successfully! Your Application ID: " << applicationId << endl;
                 }
                 else {
@@ -338,13 +341,6 @@ void Applicant::collectData() {
                 applicationId = "";
             }
         }
-        else if (confirm == "no") {
-            validConfirm = true;
-            cout << "Application cancelled." << endl;
-        }
-        else {
-            cout << "Invalid input. Please enter 'yes' or 'no': ";
-        }
     }
 }
 
@@ -355,55 +351,6 @@ void Applicant::showApplicationSummary() {
     cout << "CNIC: " << cnic << endl;
     cout << "Email: " << email << endl;
     cout << "Annual Income: " << annualIncome << endl;
-}
-
-// generateApplicationId
-string Applicant::generateApplicationId() {
-    int highestId = 1000; // Default starting ID
-
-    // Find the highest existing ID from applications.txt
-    ifstream appFile("applications.txt");
-    string line;
-
-    if (appFile) {
-        while (getline(appFile, line)) {
-            if (!line.empty()) {
-                size_t pos = line.find('#');
-                if (pos != string::npos) {
-                    string idStr = line.substr(0, pos);
-                    try {
-                        int currentId = stoi(idStr);
-                        if (currentId > highestId) {
-                            highestId = currentId;
-                        }
-                    }
-                    catch (...) {
-                        // Ignore invalid IDs
-                    }
-                }
-            }
-        }
-        appFile.close();
-    }
-
-    // Return next ID
-    return to_string(highestId + 1);
-}
-
-// saveToFile
-bool Applicant::saveToFile() {
-    ofstream file("applications.txt", ios::app);
-    if (!file) {
-        file.open("applications.txt");
-        if (!file) {
-            return false;
-        }
-    }
-
-    string fileData = toFileString();
-    file << fileData << endl;
-    file.close();
-    return true;
 }
 
 // toFileString
@@ -628,11 +575,6 @@ bool isValidDate(const string& date) {
     return containsOnlyDigits(day) && containsOnlyDigits(month) && containsOnlyDigits(year);
 }
 
-// CNIC validation - 13 digits without dashes
-bool isValidCNIC(const string& cnic) {
-    return cnic.length() == 13 && containsOnlyDigits(cnic);
-}
-
 // Phone number validation - 11 digits
 bool isValidPhone(const string& phone) {
     return phone.length() == 11 && containsOnlyDigits(phone);
@@ -683,53 +625,4 @@ bool isValidName(const string& name) {
 // Postal code validation - 5 digits
 bool isValidPostalCode(const string& postalCode) {
     return postalCode.length() == 5 && containsOnlyDigits(postalCode);
-}
-
-// searching count through CNIC
-void countApplicationsByCNIC(string cnic) {
-    ifstream file("applications.txt");
-    if (!file) {
-        cout << "Error: applications.txt not found!" << endl;
-        return;
-    }
-
-    string line;
-    int submitted = 0;
-    int approved = 0;
-    int rejected = 0;
-
-    while (getline(file, line)) {
-       // Split by #
-        string fields[40];
-        int idx = 0;
-        string temp = "";
-
-        for (int i = 0; i < line.length(); i++) {
-            if (line[i] == '#') {
-                fields[idx++] = temp;
-                temp = "";
-            }
-            else {
-                temp += line[i];
-            }
-        }
-        fields[idx] = temp; // last one
-
-        // CNIC is in index 6
-        if (fields[6] == cnic) {
-            submitted++;
-
-            string status = fields[31];  // last field
-
-            if (status == "approved" || status == "Approved")
-                approved++;
-            else if (status == "rejected" || status == "Rejected")
-                rejected++;
-        }
-    }
-
-    cout << "\n--- Application Count for CNIC: " << cnic << " ---\n";
-    cout << "Submitted: " << submitted << endl;
-    cout << "Approved:  " << approved << endl;
-    cout << "Rejected:  " << rejected << endl;
 }
