@@ -40,6 +40,9 @@ public:
     static void countApplicationsByCNIC(const string& cnic);
     static bool isValidCNIC(const string& cnic);
     static bool loadApplication(const string& appId, const string& cnic, Applicant& applicant); // for c1,c2,c3
+
+    // New function moved from GeneralChat
+    static void loadHumanCorpus(vector<string>& human1Lines, vector<string>& human2Lines);
 };
 
 #endif // FILEHANDLING_H

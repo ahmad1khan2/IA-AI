@@ -719,6 +719,7 @@ void Parser::cleanupLoans(vector<Loan*>& loans) {
     }
     loans.clear();
 }
+
 bool Parser::loadApplication(const string& appId, const string& cnic, Applicant& applicant) {
     ifstream file("applications.txt");
     if (!file) {
@@ -801,4 +802,30 @@ bool Parser::loadApplication(const string& appId, const string& cnic, Applicant&
     file.close();
     cout << "Error: Application not found with ID: " << appId << " and CNIC: " << cnic << endl;
     return false;
+}
+
+void Parser::loadHumanCorpus(vector<string>& human1Lines, vector<string>& human2Lines) {
+    ifstream file("human_chat_corpus.txt");
+    if (!file.is_open()) {
+        cout << "Chatbot: Error loading chat corpus. General chat mode unavailable." << endl;
+        return;
+    }
+
+    string line;
+    int human1Count = 0;
+    int human2Count = 0;
+
+    while (getline(file, line)) {
+        if (line.find("Human 1: ") == 0) {
+            human1Lines.push_back(line.substr(9)); // Remove "Human 1: " prefix
+            human1Count++;
+        }
+        else if (line.find("Human 2: ") == 0) {
+            human2Lines.push_back(line.substr(9)); // Remove "Human 2: " prefix
+            human2Count++;
+        }
+    }
+
+    file.close();
+    cout << "Chatbot: Loaded " << human1Count << " Human1 lines and " << human2Count << " Human2 lines." << endl;
 }

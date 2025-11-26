@@ -129,20 +129,25 @@
     <ClCompile Include="Car.cpp" />
     <ClCompile Include="CNICState.cpp" />
     <ClCompile Include="fileHandling.cpp" />
+    <ClCompile Include="GeneralChat.cpp" />
+    <ClCompile Include="GeneralChatState.cpp" />
     <ClCompile Include="home.cpp" />
     <ClCompile Include="HomeState.cpp" />
     <ClCompile Include="interface.cpp" />
     <ClCompile Include="MainState.cpp" />
+    <ClCompile Include="persman.cpp" />
+    <ClCompile Include="Personal.cpp" />
     <ClCompile Include="Scooter.cpp" />
     <ClCompile Include="LenderInterface.cpp" />
     <ClCompile Include="ScooterState.cpp" />
     <ClCompile Include="StateManager.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="..\..\..\..\..\Car.txt" />
-    <Text Include="..\..\..\..\..\Home.txt" />
-    <Text Include="..\..\..\..\..\Scooter.txt" />
     <Text Include="applications.txt" />
+    <Text Include="Car.txt" />
+    <Text Include="Home.txt" />
+    <Text Include="human_chat_corpus.txt" />
+    <Text Include="Scooter.txt" />
     <Text Include="personal.txt" />
     <Text Include="Utterances.txt" />
   </ItemGroup>
@@ -154,10 +159,13 @@
     <ClInclude Include="Car.h" />
     <ClInclude Include="CNICState.h" />
     <ClInclude Include="fileHandling.h" />
+    <ClInclude Include="GeneralChat.h" />
+    <ClInclude Include="GeneralChatState.h" />
     <ClInclude Include="home.h" />
     <ClInclude Include="HomeState.h" />
     <ClInclude Include="loan.h" />
     <ClInclude Include="MainState.h" />
+    <ClInclude Include="Personal.h" />
     <ClInclude Include="Scooter.h" />
     <ClInclude Include="ScooterState.h" />
     <ClInclude Include="StateManager.h" />
