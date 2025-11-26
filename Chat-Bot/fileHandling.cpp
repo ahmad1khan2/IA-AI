@@ -670,31 +670,35 @@ void Parser::countApplicationsByCNIC(const string& cnic) {
     string line;
 
     while (getline(fileContent, line)) {
-        // Split line by #
-        string fields[40];
-        int idx = 0;
-        string temp = "";
+        // Use vector instead of fixed array
+        vector<string> fields;
+        string field;
+        stringstream ss(line);
 
-        for (int i = 0; i < line.length(); i++) {
-            if (line[i] == '#') {
-                fields[idx++] = temp;
-                temp = "";
-            }
-            else {
-                temp += line[i];
+        // Split by # delimiter safely
+        while (getline(ss, field, '#')) {
+            fields.push_back(field);
+        }
+
+        // Check if we have enough fields before accessing
+        if (fields.size() >= 32) { // Need at least 32 fields for CNIC (index 6) and status (index 31)
+            // CNIC is at index 6
+            if (fields[6] == cnic) {
+                submitted++;
+                string status = fields[31]; // status field
+
+                if (status == "approved" || status == "Approved")
+                    approved++;
+                else if (status == "rejected" || status == "Rejected")
+                    rejected++;
             }
         }
-        fields[idx] = temp; // last field
-
-        // CNIC is at index 6
-        if (fields[6] == cnic) {
-            submitted++;
-            string status = fields[31]; // status field
-
-            if (status == "approved" || status == "Approved")
-                approved++;
-            else if (status == "rejected" || status == "Rejected")
-                rejected++;
+        // Handle records with fewer fields but at least CNIC field
+        else if (fields.size() >= 7) { // At least have CNIC at index 6
+            if (fields[6] == cnic) {
+                submitted++;
+                // Can't determine approval status with insufficient fields
+            }
         }
     }
 
