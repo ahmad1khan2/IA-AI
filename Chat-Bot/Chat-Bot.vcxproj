@@ -135,8 +135,8 @@
     <ClCompile Include="HomeState.cpp" />
     <ClCompile Include="interface.cpp" />
     <ClCompile Include="MainState.cpp" />
-    <ClCompile Include="persman.cpp" />
     <ClCompile Include="Personal.cpp" />
+    <ClCompile Include="PersonalState.cpp" />
     <ClCompile Include="Scooter.cpp" />
     <ClCompile Include="LenderInterface.cpp" />
     <ClCompile Include="ScooterState.cpp" />
@@ -166,6 +166,7 @@
     <ClInclude Include="loan.h" />
     <ClInclude Include="MainState.h" />
     <ClInclude Include="Personal.h" />
+    <ClInclude Include="PersonalState.h" />
     <ClInclude Include="Scooter.h" />
     <ClInclude Include="ScooterState.h" />
     <ClInclude Include="StateManager.h" />

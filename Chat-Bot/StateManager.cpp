@@ -3,6 +3,7 @@
 #include "CarState.h"
 #include "HomeState.h"
 #include "ScooterState.h"
+#include "PersonalState.h"
 #include "CNICState.h"
 #include <iostream>
 #include <algorithm>
@@ -12,12 +13,10 @@ using namespace std;
 // Constructor: Starts the bot in MainState
 StateManager::StateManager() {
     currentState = make_unique<MainState>();
-
 }
 
 // Logic to detect global commands or pass input to current state
 void StateManager::handleInput(const string& input) {
-
     // 1. Normalize input for checking global commands (H, C, S, etc.)
     string normalized = input;
     if (!normalized.empty()) {
@@ -41,12 +40,12 @@ void StateManager::handleInput(const string& input) {
         changeState(make_unique<ScooterState>());
         return;
     }
-    else if (normalized == "Q" || upperFull == "QUERY") {
-        changeState(make_unique<CNICState>());
+    else if (normalized == "P" || upperFull == "PERSONAL") {
+        changeState(make_unique<PersonalState>());
         return;
     }
-    else if (normalized == "G" || upperFull == "CHAT" || upperFull == "GENERAL") {
-        changeState(make_unique<GeneralChatState>());
+    else if (normalized == "Q" || upperFull == "QUERY") {
+        changeState(make_unique<CNICState>());
         return;
     }
     else if (upperFull == "MAIN" || upperFull == "MENU" || upperFull == "EXIT" || upperFull == "A") {
