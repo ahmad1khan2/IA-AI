@@ -78,8 +78,9 @@ vector<unique_ptr<Applicant>> readApplications(const string& path) {
     while (getline(fileContent, line)) {
         if (line.empty()) continue;
         vector<string> t = splitTokens(line, '#');
-        // Need at least 15 fields + one existing-loan(6) + 5 + 5 + 1 = 32 fields for full data
-        if (t.size() < 32) {
+
+        // Updated: Need 36 fields for full data including document paths
+        if (t.size() < 36) {
             // tolerate shorter lines but skip invalid
             cerr << "Warning: skipping malformed line (fields=" << t.size() << "):\n  " << line << '\n';
             continue;
@@ -87,6 +88,8 @@ vector<unique_ptr<Applicant>> readApplications(const string& path) {
 
         auto a = make_unique<Applicant>();
         size_t idx = 0;
+
+        // Basic information (fields 0-14)
         a->applicationId = t[idx++];            // 0
         a->fullName = t[idx++];                 // 1
         a->fathersName = t[idx++];              // 2
@@ -103,41 +106,34 @@ vector<unique_ptr<Applicant>> readApplications(const string& path) {
         a->avgElectricityBill = t[idx++];       // 13
         a->currentElectricityBill = t[idx++];   // 14
 
-        // remaining fields: one or more existing loans (groups of 6),
-        // then referee1 (5), referee2 (5), then status (1).
-        size_t remaining = t.size() - idx;
-        if (remaining < 11) { // not enough for two referees + status
-            cerr << "Warning: not enough fields for referees/status, skipping line\n";
-            continue;
+        // Existing loans (fields 15-20) - always 6 fields
+        a->existingLoans.clear();
+        if (t[15] != "NO_LOAN" && t[15] != "No") {
+            a->addExistingLoan(t[15], t[16], t[17], t[18], t[19], t[20]);
         }
-        size_t loansArea = remaining - 11; // fields dedicated to existing loans (multiple of 6)
-        size_t loanCount = 0;
-        if (loansArea >= 6) loanCount = loansArea / 6;
-        // parse existing loans
-        for (size_t li = 0; li < loanCount; ++li) {
-            size_t base = idx + li * 6;
-            ExistingLoan L(
-                t[base + 0], t[base + 1], t[base + 2],
-                t[base + 3], t[base + 4], t[base + 5]);
-            a->existingLoans.push_back(L);
-        }
-        idx += loanCount * 6;
+        idx += 6; // Move past the loan fields
 
-        // parse referees
-        a->referee1.name = (idx < t.size()) ? t[idx++] : "";
-        a->referee1.cnic = (idx < t.size()) ? t[idx++] : "";
-        a->referee1.issueDate = (idx < t.size()) ? t[idx++] : "";
-        a->referee1.phone = (idx < t.size()) ? t[idx++] : "";
-        a->referee1.email = (idx < t.size()) ? t[idx++] : "";
+        // Referees (fields 21-30) - 10 fields total (5 each)
+        a->referee1.name = t[idx++];            // 21
+        a->referee1.cnic = t[idx++];            // 22
+        a->referee1.issueDate = t[idx++];       // 23
+        a->referee1.phone = t[idx++];           // 24
+        a->referee1.email = t[idx++];           // 25
 
-        a->referee2.name = (idx < t.size()) ? t[idx++] : "";
-        a->referee2.cnic = (idx < t.size()) ? t[idx++] : "";
-        a->referee2.issueDate = (idx < t.size()) ? t[idx++] : "";
-        a->referee2.phone = (idx < t.size()) ? t[idx++] : "";
-        a->referee2.email = (idx < t.size()) ? t[idx++] : "";
+        a->referee2.name = t[idx++];            // 26
+        a->referee2.cnic = t[idx++];            // 27
+        a->referee2.issueDate = t[idx++];       // 28
+        a->referee2.phone = t[idx++];           // 29
+        a->referee2.email = t[idx++];           // 30
 
-        // final field: status
-        a->status = (idx < t.size()) ? t[idx++] : "";
+        // NEW: Document paths (fields 31-34) - 4 fields
+        a->cnicFrontPath = t[idx++];            // 31
+        a->cnicBackPath = t[idx++];             // 32
+        a->electricityBillPath = t[idx++];      // 33
+        a->salarySlipPath = t[idx++];           // 34
+
+        // Status (field 35)
+        a->status = t[idx++];                   // 35
 
         apps.push_back(std::move(a));
     }
@@ -147,7 +143,6 @@ vector<unique_ptr<Applicant>> readApplications(const string& path) {
 
 // Convert an Applicant back to file-format line
 string applicantToLine(const Applicant& a) {
-    // ... existing code remains exactly the same ...
     stringstream ss;
     ss << a.applicationId << '#'
         << a.fullName << '#'
@@ -181,7 +176,7 @@ string applicantToLine(const Applicant& a) {
         ss << "No#No#No#No#No#No#";
     }
 
-    // referees
+    // referees (10 fields total)
     ss << a.referee1.name << '#'
         << a.referee1.cnic << '#'
         << a.referee1.issueDate << '#'
@@ -193,6 +188,12 @@ string applicantToLine(const Applicant& a) {
         << a.referee2.issueDate << '#'
         << a.referee2.phone << '#'
         << a.referee2.email << '#';
+
+    // NEW: Document paths (4 fields)
+    ss << a.cnicFrontPath << '#'
+        << a.cnicBackPath << '#'
+        << a.electricityBillPath << '#'
+        << a.salarySlipPath << '#';
 
     // status
     ss << a.status;
@@ -245,8 +246,6 @@ bool writeApplications(const string& path, const vector<unique_ptr<Applicant>>& 
     return true;
 }
 
-
-
 // Print a brief list (index, id, name, status)
 void printApplicationsList(const vector<unique_ptr<Applicant>>& apps) {
     cout << "\nApplications:\n";
@@ -254,9 +253,9 @@ void printApplicationsList(const vector<unique_ptr<Applicant>>& apps) {
     cout << "-----+----------+-----------------------------+---------\n";
     for (size_t i = 0; i < apps.size(); ++i) {
         cout << setw(4) << right << (i + 1) << " | "
-             << setw(8) << left << apps[i]->applicationId << " | "
-             << setw(27) << left << apps[i]->fullName << " | "
-             << setw(8) << left << apps[i]->status << '\n';
+            << setw(8) << left << apps[i]->applicationId << " | "
+            << setw(27) << left << apps[i]->fullName << " | "
+            << setw(8) << left << apps[i]->status << '\n';
     }
     cout << '\n';
 }
@@ -282,25 +281,33 @@ void printApplicantDetails(const Applicant& a) {
     cout << "\nExisting loans (" << a.existingLoans.size() << "):\n";
     if (a.existingLoans.empty()) {
         cout << "  (none)\n";
-    } else {
+    }
+    else {
         for (size_t i = 0; i < a.existingLoans.size(); ++i) {
             const auto& L = a.existingLoans[i];
             cout << "  Loan " << (i + 1) << ": status=" << L.loanStatus
-                 << ", total=" << L.totalAmount
-                 << ", returned=" << L.amountReturned
-                 << ", due=" << L.amountDue
-                 << ", bank=" << L.bankName
-                 << ", category=" << L.loanCategory << '\n';
+                << ", total=" << L.totalAmount
+                << ", returned=" << L.amountReturned
+                << ", due=" << L.amountDue
+                << ", bank=" << L.bankName
+                << ", category=" << L.loanCategory << '\n';
         }
     }
 
     cout << "\nReferee 1: " << a.referee1.name << ", CNIC: " << a.referee1.cnic
-         << ", Issue: " << a.referee1.issueDate << ", Phone: " << a.referee1.phone
-         << ", Email: " << a.referee1.email << '\n';
+        << ", Issue: " << a.referee1.issueDate << ", Phone: " << a.referee1.phone
+        << ", Email: " << a.referee1.email << '\n';
 
     cout << "Referee 2: " << a.referee2.name << ", CNIC: " << a.referee2.cnic
-         << ", Issue: " << a.referee2.issueDate << ", Phone: " << a.referee2.phone
-         << ", Email: " << a.referee2.email << '\n';
+        << ", Issue: " << a.referee2.issueDate << ", Phone: " << a.referee2.phone
+        << ", Email: " << a.referee2.email << '\n';
+
+    // NEW: Display document paths
+    cout << "\nDocument Paths:\n";
+    cout << "CNIC Front:      " << (a.cnicFrontPath.empty() ? "Not uploaded" : a.cnicFrontPath) << '\n';
+    cout << "CNIC Back:       " << (a.cnicBackPath.empty() ? "Not uploaded" : a.cnicBackPath) << '\n';
+    cout << "Electricity Bill:" << (a.electricityBillPath.empty() ? "Not uploaded" : a.electricityBillPath) << '\n';
+    cout << "Salary Slip:     " << (a.salarySlipPath.empty() ? "Not uploaded" : a.salarySlipPath) << '\n';
 
     cout << "Current status: " << a.status << '\n';
 }
@@ -319,12 +326,13 @@ void runLenderInterface(const string& path = "applications.txt") {
         string sel;
         getline(cin, sel);
         int idx = -1;
-        try { idx = stoi(sel); } catch (...) { idx = -1; }
+        try { idx = stoi(sel); }
+        catch (...) { idx = -1; }
         if (idx == 0) {
             cout << "Exiting lender interface.\n";
             break;
         }
-        if (idx < 1 || idx > (int)apps.size()) {
+        if (idx < 1 || idx >(int)apps.size()) {
             cout << "Invalid selection.\n";
             continue;
         }
@@ -350,24 +358,26 @@ void runLenderInterface(const string& path = "applications.txt") {
         }
 
         cout << "Change status of application " << chosen->applicationId
-             << " from \"" << chosen->status << "\" to \"" << newStatus << "\"? (y/n): ";
+            << " from \"" << chosen->status << "\" to \"" << newStatus << "\"? (y/n): ";
         string confirm;
         getline(cin, confirm);
         if (!confirm.empty() && (confirm[0] == 'y' || confirm[0] == 'Y')) {
             chosen->status = newStatus;
             if (!writeApplications(path, apps)) {
                 cerr << "Failed to write changes to file.\n";
-            } else {
+            }
+            else {
                 cout << "Status updated and written to file.\n";
             }
-        } else {
+        }
+        else {
             cout << "Cancelled.\n";
         }
     }
 }
 
-//int main()
-//{
-//    runLenderInterface();
-//    return 0;
-//}
+int main()
+{
+    runLenderInterface();
+    return 0;
+}
