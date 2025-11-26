@@ -32,6 +32,20 @@ void MainState::handleInput(const string& input) {
     string normalized = input;
     transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
 
+    // NEW: Check if input is numeric and reject with MAIN MENU error
+    bool isNumeric = !input.empty();
+    for (char c : input) {
+        if (!isdigit(c)) {
+            isNumeric = false;
+            break;
+        }
+    }
+
+    if (isNumeric) {
+        cout << "Chatbot: Invalid input. Please enter a valid command like H, C, S, P, Q, or menu." << endl;
+        return;  // STOP processing - don't check utterances
+    }
+
     // 1. Check Utterances file matches
     bool found = false;
     for (size_t i = 0; i < userInput.size(); i++) {

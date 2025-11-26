@@ -779,7 +779,7 @@ void Applicant::checkForExit(const string& input, const string& currentStatus) {
             saveCheckpoint(currentStatus);
             cout << "You can resume later with AppID: " << applicationId << endl;
             cout << "Returning to main menu..." << endl;
-            throw runtime_error("exit_application");
+            throw ReturnToMainMenuException();
         }
     }
 }

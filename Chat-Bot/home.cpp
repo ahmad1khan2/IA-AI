@@ -33,8 +33,26 @@ void HomeLoanHandler::handleMainState(const string& input) {
             homeLoanAttempt = 0;
         }
     }
+    else if (input == "menu") {
+        cout << "Chatbot: Returning to main menu..." << endl;
+        chatState = "main";
+    }
     else {
-        cout << "Chatbot: Type 'show' to see home loan options or 'menu' to return to main menu." << endl;
+        // Check if input is numeric (like "1234") and reject it
+        bool isNumeric = !input.empty();
+        for (char c : input) {
+            if (!isdigit(c)) {
+                isNumeric = false;
+                break;
+            }
+        }
+
+        if (isNumeric) {
+            cout << "Chatbot: Invalid input. Please type 'show' to see home loan options or 'menu' to return to main menu." << endl;
+        }
+        else {
+            cout << "Chatbot: Invalid command. Type 'show' to see home loan options or 'menu' to return to main menu." << endl;
+        }
     }
 }
 
@@ -136,7 +154,13 @@ void HomeLoanHandler::handleSelectState(const string& input) {
 void HomeLoanHandler::handleApplyState(int selectedIndex) {
     cout << "\n=== STARTING HOME LOAN APPLICATION ===" << endl;
     Applicant applicant;
-    applicant.collectData();
+    try {
+        applicant.collectData();
+    }
+    catch (const ReturnToMainMenuException& e) {
+        // Re-throw to be caught by StateManager
+        throw;
+    }
 
     // Check if application was actually completed or just exited
     if (applicant.getStatus() == "Submitted") {
@@ -144,14 +168,27 @@ void HomeLoanHandler::handleApplyState(int selectedIndex) {
 
         // Only ask for installment plan if application was completed
         int startMonth = 1;
-        cout << "Chatbot: Enter starting month for installment plan (1-12):";
+        cout << "Chatbot: Enter starting month for installment plan (1-12): ";
         string monthInput;
         getline(cin, monthInput);
+
+        // Validate month input
+        bool validMonth = false;
         try {
             int m = stoi(monthInput);
-            if (m > 0) startMonth = m;
+            if (m >= 1 && m <= 12) {
+                startMonth = m;
+                validMonth = true;
+            }
         }
-        catch (...) { startMonth = 1; }
+        catch (...) {
+            // Invalid input, use default
+        }
+
+        if (!validMonth) {
+            cout << "Chatbot: Invalid month. Using default starting month 1." << endl;
+            startMonth = 1;
+        }
 
         displayInstallmentPlanWithMonths(selectedIndex, startMonth);
     }

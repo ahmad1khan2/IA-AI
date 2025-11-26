@@ -1,4 +1,5 @@
 #include "Car.h"
+#include "applicant.h"
 #include "fileHandling.h"   // Parser::readCar / stoiSafe etc.
 #include "CarState.h"
 #include <iostream>
@@ -42,8 +43,26 @@ void CarLoanHandler::handleMainState(const string& input) {
             carLoanAttempt = 0;
         }
     }
+    else if (input == "menu") {
+        cout << "Chatbot: Returning to main menu..." << endl;
+        chatState = "main";
+    }
     else {
-        cout << "Chatbot: Type 'show' to see car options or 'menu' to return to main menu." << endl;
+        // Check if input is numeric (like "1234") and reject it
+        bool isNumeric = !input.empty();
+        for (char c : input) {
+            if (!isdigit(c)) {
+                isNumeric = false;
+                break;
+            }
+        }
+
+        if (isNumeric) {
+            cout << "Chatbot: Invalid input. Please type 'show' to see car options or 'menu' to return to main menu." << endl;
+        }
+        else {
+            cout << "Chatbot: Invalid command. Type 'show' to see car options or 'menu' to return to main menu." << endl;
+        }
     }
 }
 
@@ -75,9 +94,24 @@ void CarLoanHandler::displayCarOptions() {
 }
 
 void CarLoanHandler::handleSelectState(const string& input) {
-    if (input == "b") {
+    if (input == "b" || input == "menu") {
         cout << "Chatbot: Returning to main menu. Press C for car loan or X to exit." << endl;
         chatState = "main";
+        return;
+    }
+
+    // Check if input is numeric before trying to convert
+    bool isNumeric = !input.empty();
+    for (char c : input) {
+        if (!isdigit(c)) {
+            isNumeric = false;
+            break;
+        }
+    }
+
+    if (!isNumeric) {
+        cout << "Chatbot: Invalid command. Please type a number from 1 to "
+            << currentOptionsCount << ", or B to go back." << endl;
         return;
     }
 
@@ -111,7 +145,7 @@ void CarLoanHandler::handleSelectState(const string& input) {
     }
     else {
         cout << "Chatbot: Invalid selection. Please type a number from 1 to "
-            << currentOptionsCount << ", B to go back, or X to exit." << endl;
+            << currentOptionsCount << ", or B to go back." << endl;
     }
 }
 
@@ -137,7 +171,13 @@ void CarLoanHandler::handleApplyState(int selectedIndex) {
     cout << "\n=== STARTING CAR LOAN APPLICATION PROCESS ===" << endl;
 
     Applicant applicant;
-    applicant.collectData();
+    try {
+        applicant.collectData();
+    }
+    catch (const ReturnToMainMenuException& e) {
+        // Re-throw to be caught by StateManager
+        throw;
+    }
 
     // Check if application was actually completed or just exited
     if (applicant.getStatus() == "Submitted") {
