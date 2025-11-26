@@ -11,6 +11,7 @@ using namespace std;
 GeneralChatHandler::GeneralChatHandler()
     : chatState("chatting")
 {
+    cout << "-------DEBUG----------";
     // Use Parser to load human corpus instead of local function
     Parser::loadHumanCorpus(human1Lines, human2Lines);
 }

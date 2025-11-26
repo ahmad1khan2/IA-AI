@@ -4,6 +4,7 @@
 #include "HomeState.h"
 #include "ScooterState.h"
 #include "PersonalState.h"
+#include "GeneralChatState.h"
 #include "CNICState.h"
 #include <iostream>
 #include <algorithm>
@@ -46,6 +47,10 @@ void StateManager::handleInput(const string& input) {
     }
     else if (normalized == "Q" || upperFull == "QUERY") {
         changeState(make_unique<CNICState>());
+        return;
+    }
+    else if (normalized == "G" || upperFull == "CHAT") {
+        changeState(make_unique<GeneralChatState>());
         return;
     }
     else if (upperFull == "MAIN" || upperFull == "MENU" || upperFull == "EXIT" || upperFull == "A") {
