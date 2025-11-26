@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include <iostream>
 #include <string>
 #include <iomanip>
@@ -59,8 +58,7 @@ public:
         cout << "  Installment price: " << fixed << setprecision(2) << installmentPrice << '\n';
     }
 
-    // Print tabular installment plan. Calls virtual print() first so derived classes
-    // can display their unique information, then prints a numbered schedule.
+    // Print tabular installment plan
     void printInstallmentPlan() const {
         // First print unique info from derived class
         print();
@@ -78,8 +76,8 @@ public:
             return;
         }
 
-        // Use cached installmentPrice (already calculated and rounded display handled below)
-        double perInstallment = installmentPrice;
+        // FIXED: Calculate fresh each time to avoid precision errors
+        double perInstallment = loanAmount / n;
 
         cout << "Loan Amount: $" << fixed << setprecision(2) << loanAmount << '\n';
         cout << "Number of installments: " << n << '\n';
@@ -94,33 +92,39 @@ public:
             << setw(18) << "Remaining" << '\n';
         cout << string(70, '-') << '\n';
 
-        // Schedule calculation
+        // FIXED: Proper installment calculation
         double remaining = loanAmount;
         double totalPaid = 0.0;
 
         for (int month = 1; month <= n; ++month) {
             double principalThisMonth;
+
             if (month == n) {
-                // last month: pay whatever remains (to handle rounding)
+                // Last month: pay exact remaining balance
                 principalThisMonth = remaining;
             }
             else {
+                // Regular month: pay equal installment
                 principalThisMonth = perInstallment;
             }
 
-            // Ensure we don't produce tiny negative values due to floating point
-            if (principalThisMonth < 0.0) principalThisMonth = 0.0;
+            // Ensure we don't pay more than remaining
+            if (principalThisMonth > remaining) {
+                principalThisMonth = remaining;
+            }
 
             remaining -= principalThisMonth;
-            if (remaining < 0.0 && fabs(remaining) < 0.005) remaining = 0.0; // small epsilon fix
-
             totalPaid += principalThisMonth;
 
+            // FIXED: Round to 2 decimal places for display
             cout << right << setw(4) << month << "   "
                 << setw(12) << fixed << setprecision(2) << perInstallment << "   "
                 << setw(12) << fixed << setprecision(2) << principalThisMonth << "   "
-                << setw(12) << fixed << setprecision(2) << (remaining > 0.0 ? remaining : 0.0)
+                << setw(12) << fixed << setprecision(2) << (remaining >= 0.0 ? remaining : 0.0)
                 << '\n';
+
+            // Break if fully paid
+            if (remaining <= 0.0) break;
         }
 
         cout << string(70, '-') << '\n';
@@ -129,15 +133,12 @@ public:
     }
 
     // Print installment plan with an extra "Month" column starting at startMonth.
-    // startMonth <= 0 will be treated as 1.
     void printInstallmentPlanStartingAt(int startMonth) const {
         static const string months[] = {
             "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-            "Jan", "Feb", "Mar", "Apr", "May", "Jun",
             "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
         };
-        // normalize startMonth
+
         if (startMonth <= 0) startMonth = 1;
 
         // allow derived classes to print their unique info first
@@ -156,7 +157,8 @@ public:
             return;
         }
 
-        double perInstallment = installmentPrice;
+        // FIXED: Calculate fresh each time
+        double perInstallment = loanAmount / n;
 
         cout << "Loan Amount: $" << fixed << setprecision(2) << loanAmount << '\n';
         cout << "Number of installments: " << n << '\n';
@@ -172,13 +174,14 @@ public:
             << setw(18) << "Remaining" << '\n';
         cout << string(80, '-') << '\n';
 
-        // Schedule calculation
+        // FIXED: Proper installment calculation with months
         double remaining = loanAmount;
         double totalPaid = 0.0;
 
         for (int i = 1; i <= n; ++i) {
             string displayMonth = months[((startMonth - 1) + (i - 1)) % 12];
             double principalThisMonth;
+
             if (i == n) {
                 principalThisMonth = remaining;
             }
@@ -186,19 +189,21 @@ public:
                 principalThisMonth = perInstallment;
             }
 
-            if (principalThisMonth < 0.0) principalThisMonth = 0.0;
+            if (principalThisMonth > remaining) {
+                principalThisMonth = remaining;
+            }
 
             remaining -= principalThisMonth;
-            if (remaining < 0.0 && fabs(remaining) < 0.005) remaining = 0.0;
-
             totalPaid += principalThisMonth;
 
             cout << right << setw(4) << i << "   "
                 << setw(6) << displayMonth << "   "
                 << setw(12) << fixed << setprecision(2) << perInstallment << "   "
                 << setw(12) << fixed << setprecision(2) << principalThisMonth << "   "
-                << setw(12) << fixed << setprecision(2) << (remaining > 0.0 ? remaining : 0.0)
+                << setw(12) << fixed << setprecision(2) << (remaining >= 0.0 ? remaining : 0.0)
                 << '\n';
+
+            if (remaining <= 0.0) break;
         }
 
         cout << string(80, '-') << '\n';
@@ -207,6 +212,7 @@ public:
     }
 };
 
+// ... rest of your loan classes remain the same
 class homeLoan : public Loan {
     int area;
     string size;
@@ -330,7 +336,7 @@ public:
     }
 };
 
-class personalLoan : public Loan {//for personal loan price will be entered by the user validated to be less than maxAmount
+class personalLoan : public Loan {
 private:
     string loanType;
     int maxAmount;
@@ -371,13 +377,193 @@ public:
     void setInterestRate(double r) { interestRate = r; }
     void setProcessingFee(int f) { processingFee = f; }
 
-    // Print details using cout
+    // OVERRIDE: Print details using cout with interest calculation
     void print() const override {
         cout << "PersonalLoan:\n";
-        Loan::print();
         cout << "  Loan Type: " << loanType << '\n';
+        cout << "  Loan Amount: " << getPrice() << '\n';
+        cout << "  Down payment: " << getDownPayment() << '\n';
+        cout << "  Installments: " << getInstallments() << '\n';
         cout << "  Max Amount: " << maxAmount << '\n';
-        cout << "  Interest Rate: " << fixed << setprecision(2) << interestRate << "%\n";
+        cout << "  Annual Interest Rate: " << fixed << setprecision(2) << interestRate << "%\n";
         cout << "  Processing Fee: " << processingFee << '\n';
+    }
+
+    // OVERRIDE: Installment plan with interest calculation
+    void printInstallmentPlan() const override {
+        print();
+
+        double loanAmount = static_cast<double>(getPrice() - getDownPayment());
+        int n = getInstallments();
+
+        if (n <= 0) {
+            cout << "No installments available.\n";
+            return;
+        }
+
+        // Calculate monthly installment with interest
+        double monthlyRate = interestRate / 12 / 100;
+        double installment = 0.0;
+
+        if (monthlyRate > 0) {
+            // With interest: PMT = P * r * (1+r)^n / ((1+r)^n - 1)
+            installment = loanAmount * monthlyRate * pow(1 + monthlyRate, n)
+                / (pow(1 + monthlyRate, n) - 1);
+        }
+        else {
+            // No interest: simple division
+            installment = loanAmount / n;
+        }
+
+        cout << "\n" << string(80, '=') << '\n';
+        cout << "INSTALLMENT SCHEDULE (with " << interestRate << "% interest)" << '\n';
+        cout << string(80, '=') << '\n';
+        cout << "Loan Amount: $" << fixed << setprecision(2) << loanAmount << '\n';
+        cout << "Annual Interest Rate: " << interestRate << "%\n";
+        cout << "Monthly Installment: $" << fixed << setprecision(2) << installment << '\n';
+        cout << "Number of installments: " << n << '\n';
+        cout << string(80, '-') << '\n';
+
+        // Column headings
+        cout << left
+            << setw(8) << "No."
+            << setw(12) << "Installment"
+            << setw(15) << "Interest Paid"
+            << setw(15) << "Principal Paid"
+            << setw(15) << "Remaining" << '\n';
+        cout << string(80, '-') << '\n';
+
+        double remaining = loanAmount;
+        double totalInterest = 0.0;
+        double totalPrincipal = 0.0;
+
+        for (int month = 1; month <= n; ++month) {
+            double interestThisMonth = remaining * monthlyRate;
+            double principalThisMonth;
+
+            if (month == n) {
+                // Last month: adjust to pay off exactly
+                principalThisMonth = remaining;
+            }
+            else {
+                principalThisMonth = installment - interestThisMonth;
+            }
+
+            // Ensure we don't overpay
+            if (principalThisMonth > remaining) {
+                principalThisMonth = remaining;
+            }
+
+            remaining -= principalThisMonth;
+            totalInterest += interestThisMonth;
+            totalPrincipal += principalThisMonth;
+
+            cout << right << setw(4) << month << "   "
+                << setw(10) << fixed << setprecision(2) << installment << "   "
+                << setw(12) << fixed << setprecision(2) << interestThisMonth << "   "
+                << setw(12) << fixed << setprecision(2) << principalThisMonth << "   "
+                << setw(12) << fixed << setprecision(2) << (remaining >= 0.0 ? remaining : 0.0)
+                << '\n';
+
+            if (remaining <= 0.0) break;
+        }
+
+        cout << string(80, '-') << '\n';
+        cout << "Total Interest Paid: $" << fixed << setprecision(2) << totalInterest << '\n';
+        cout << "Total Principal Paid: $" << fixed << setprecision(2) << totalPrincipal << '\n';
+        cout << "Total Amount Paid: $" << fixed << setprecision(2) << (totalInterest + totalPrincipal) << '\n';
+        cout << string(80, '=') << '\n';
+    }
+
+    // OVERRIDE: Month-based plan with interest
+    void printInstallmentPlanStartingAt(int startMonth) const override {
+        static const string months[] = {
+            "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+        };
+
+        if (startMonth <= 0) startMonth = 1;
+
+        print();
+
+        double loanAmount = static_cast<double>(getPrice() - getDownPayment());
+        int n = getInstallments();
+
+        if (n <= 0) {
+            cout << "No installments available.\n";
+            return;
+        }
+
+        // Calculate monthly installment with interest
+        double monthlyRate = interestRate / 12 / 100;
+        double installment = 0.0;
+
+        if (monthlyRate > 0) {
+            installment = loanAmount * monthlyRate * pow(1 + monthlyRate, n)
+                / (pow(1 + monthlyRate, n) - 1);
+        }
+        else {
+            installment = loanAmount / n;
+        }
+
+        cout << "\n" << string(90, '=') << '\n';
+        cout << "INSTALLMENT SCHEDULE (with " << interestRate << "% interest)" << '\n';
+        cout << string(90, '=') << '\n';
+        cout << "Loan Amount: $" << fixed << setprecision(2) << loanAmount << '\n';
+        cout << "Annual Interest Rate: " << interestRate << "%\n";
+        cout << "Monthly Installment: $" << fixed << setprecision(2) << installment << '\n';
+        cout << "Number of installments: " << n << '\n';
+        cout << string(90, '-') << '\n';
+
+        // Column headings with Month
+        cout << left
+            << setw(6) << "No."
+            << setw(8) << "Month"
+            << setw(12) << "Installment"
+            << setw(14) << "Interest Paid"
+            << setw(16) << "Principal Paid"
+            << setw(16) << "Remaining" << '\n';
+        cout << string(90, '-') << '\n';
+
+        double remaining = loanAmount;
+        double totalInterest = 0.0;
+        double totalPrincipal = 0.0;
+
+        for (int i = 1; i <= n; ++i) {
+            string displayMonth = months[((startMonth - 1) + (i - 1)) % 12];
+            double interestThisMonth = remaining * monthlyRate;
+            double principalThisMonth;
+
+            if (i == n) {
+                principalThisMonth = remaining;
+            }
+            else {
+                principalThisMonth = installment - interestThisMonth;
+            }
+
+            if (principalThisMonth > remaining) {
+                principalThisMonth = remaining;
+            }
+
+            remaining -= principalThisMonth;
+            totalInterest += interestThisMonth;
+            totalPrincipal += principalThisMonth;
+
+            cout << right << setw(4) << i << "   "
+                << setw(6) << displayMonth << "   "
+                << setw(10) << fixed << setprecision(2) << installment << "   "
+                << setw(12) << fixed << setprecision(2) << interestThisMonth << "   "
+                << setw(12) << fixed << setprecision(2) << principalThisMonth << "   "
+                << setw(12) << fixed << setprecision(2) << (remaining >= 0.0 ? remaining : 0.0)
+                << '\n';
+
+            if (remaining <= 0.0) break;
+        }
+
+        cout << string(90, '-') << '\n';
+        cout << "Total Interest Paid: $" << fixed << setprecision(2) << totalInterest << '\n';
+        cout << "Total Principal Paid: $" << fixed << setprecision(2) << totalPrincipal << '\n';
+        cout << "Total Amount Paid: $" << fixed << setprecision(2) << (totalInterest + totalPrincipal) << '\n';
+        cout << string(90, '=') << '\n';
     }
 };

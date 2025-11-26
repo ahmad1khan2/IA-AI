@@ -12,8 +12,8 @@ MainState::MainState() {
 
 // Called when the user first enters this state
 void MainState::onEnter() {
-    std::cout << "Chatbot: Welcome! You can ask about home loans (H), car loans (C), "
-        << "scooter loans (S), check applications (Q) or just chat (G)." << std::endl;
+    cout << "Chatbot: Welcome! You can ask about home loans (H), car loans (C), "
+        << "scooter loans (S), personal loans (P), or check applications (Q)." << endl;
 }
 
 // Returns the prompt string for the main menu
@@ -59,7 +59,7 @@ void MainState::handleInput(const string& input) {
     // 3. Default fallback if nothing matches
     if (!found) {
         cout << "Chatbot: I can help with home loans (H), car loans (C), "
-            << "scooter loans (S), or application queries (Q). "
+            << "scooter loans (S), personal loans (P), or application queries (Q). "
             << "Or type 'menu' to see options anytime." << endl;
     }
 }

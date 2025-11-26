@@ -3,10 +3,11 @@ Hello#Hi! Please press A if you want to apply for a loan. Press Q to check appli
 AoA#WaS! Please press A if you want to apply for a loan. Press Q to check application count. Press G if you just want to chat. Press X to exit. If at any point you wish to explore other options you can let me know and I'll get right to it.
 Salam#Wa alaikum salam! Please press A if you want to apply for a loan. Press Q to check application count. Press G if you just want to chat. Press X to exit. If at any point you wish to explore other options you can let me know and I'll get right to it.
 *#Hi! I'll be happy to help. Please press A if you want to apply for loan. Press Q to check application count. Press G if you just want to chat. Press X to exit. If at any point you wish to explore other options you can let me know and I'll get right to it.
-A#Please select the category you want to apply for. Press H for a home loan, C for a car loan, S for a scooter loan, P for a personal loan. Press X to exitcout. If at any point you wish to explore other options you can let me know and I'll get right to it.
+A#Please select the category you want to apply for. Press H for a home loan, C for a car loan, S for a scooter loan, P for a personal loan. Press X to exit. If at any point you wish to explore other options you can let me know and I'll get right to it.
 H#You are applying for a home loan. Please select area. Options are 1, 2, 3, 4
 C#You are applying for a car loan. Please select Make. Options are Make 1, Make 2, Make 3, Make 4
 S#You are applying for a scooter loan. Please select Make. Options are Make 1, Make 2, Make 3, Make 4
+P#You are applying for a personal loan. Please select loan type.
 chat#Great! Let's have a conversation. Type anything you'd like to talk about, or type 'menu' to return to loans.
 general#I'd love to chat! What would you like to talk about? Type 'menu' anytime to return to loan options.
 G#Entering general conversation mode. Let's chat! Type 'menu' to return to loan options.

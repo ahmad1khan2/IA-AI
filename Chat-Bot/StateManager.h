@@ -3,7 +3,7 @@
 #include <memory>
 #include "ChatState.h"
 #include "MainState.h"
-#include "GeneralChatState.h"
+#include "PersonalState.h"  // Add this include
 
 using namespace std;
 
