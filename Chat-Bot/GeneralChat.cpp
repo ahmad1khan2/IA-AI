@@ -11,35 +11,10 @@ using namespace std;
 GeneralChatHandler::GeneralChatHandler()
     : chatState("chatting")
 {
-    loadHumanCorpus();
+    // Use Parser to load human corpus instead of local function
+    Parser::loadHumanCorpus(human1Lines, human2Lines);
 }
 
-void GeneralChatHandler::loadHumanCorpus() {
-    ifstream file("human_chat_corpus.txt");
-    if (!file.is_open()) {
-        cout << "Chatbot: Error loading chat corpus. General chat mode unavailable." << endl;
-        return;
-    }
-
-    string line;
-    int human1Count = 0;
-    int human2Count = 0;
-
-    while (getline(file, line)) {
-        if (line.find("Human 1: ") == 0) {
-            human1Lines.push_back(line.substr(9)); // Remove "Human 1: " prefix
-            human1Count++;
-        }
-        else if (line.find("Human 2: ") == 0) {
-            human2Lines.push_back(line.substr(9)); // Remove "Human 2: " prefix
-            human2Count++;
-        }
-    }
-
-    file.close();
-
-    cout << "Chatbot: Loaded " << human1Count << " Human1 lines and " << human2Count << " Human2 lines." << endl;
-}
 
 // Safe character checking function
 bool isAlphaNumeric(char c) {

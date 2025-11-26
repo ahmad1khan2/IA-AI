@@ -6,27 +6,30 @@
 #include <vector>
 #include <set>
 #include <algorithm>
+#include "fileHandling.h"
+
+using namespace std;
 
 class GeneralChatHandler {
 public:
     GeneralChatHandler();
 
-    void handleInput(const std::string& input);
-    std::string getCurrentState() const { return chatState; }
+    void handleInput(const string& input);
+    string getCurrentState() const { return chatState; }
 
 private:
-    std::string chatState;
+    string chatState;
 
     // Corpus data
-    std::vector<std::string> human1Lines;
-    std::vector<std::string> human2Lines;
+    vector<string> human1Lines;
+    vector<string> human2Lines;
 
     // Tokenization and matching
-    std::set<std::string> tokenize(const std::string& text);
-    double calculateIoU(const std::set<std::string>& tokens1, const std::set<std::string>& tokens2);
-    std::string findBestResponse(const std::string& userInput);
+    set<string> tokenize(const string& text);
+    double calculateIoU(const set<string>& tokens1, const set<string>& tokens2);
+    string findBestResponse(const string& userInput);
 
-    void loadHumanCorpus();
+    
 };
 
 #endif

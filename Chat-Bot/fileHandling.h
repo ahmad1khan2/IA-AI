@@ -38,6 +38,9 @@ public:
     static string generateApplicationId();
     static void countApplicationsByCNIC(const string& cnic);
     static bool isValidCNIC(const string& cnic);
+
+    // New function moved from GeneralChat
+    static void loadHumanCorpus(vector<string>& human1Lines, vector<string>& human2Lines);
 };
 
 #endif // FILEHANDLING_H
