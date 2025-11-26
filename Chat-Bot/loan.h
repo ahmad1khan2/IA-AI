@@ -26,6 +26,10 @@ protected:
 
     Loan(int installments, int price, int down)
         : installments(installments), price(price), down(down) {
+        // FIX: Prevent negative financed amount
+        if (this->down > this->price) {
+            this->down = this->price;
+        }
         recalcInstallmentPrice();
     }
 
@@ -46,8 +50,24 @@ public:
 
     // Setters
     void setInstallments(int v) { installments = v; recalcInstallmentPrice(); }
-    void setPrice(int v) { price = v; recalcInstallmentPrice(); }
-    void setDownPayment(int v) { down = v; recalcInstallmentPrice(); }
+    void setPrice(int v) {
+        price = v;
+        // FIX: Adjust down payment if it exceeds new price
+        if (down > price) {
+            down = price;
+        }
+        recalcInstallmentPrice();
+    }
+    void setDownPayment(int v) {
+        // FIX: Prevent down payment from exceeding price
+        if (v > price) {
+            down = price;
+        }
+        else {
+            down = v;
+        }
+        recalcInstallmentPrice();
+    }
 
     // Print using cout (not ostream)
     virtual void print() const {
@@ -70,6 +90,15 @@ public:
 
         double loanAmount = static_cast<double>(price - down);
         int n = installments;
+
+        // FIX: Check for non-positive loan amount
+        if (loanAmount <= 0) {
+            cout << "NO INSTALLMENT PLAN - FULL PAYMENT COMPLETE\n";
+            cout << "Down payment covers the entire amount. No financing required.\n";
+            cout << string(70, '=') << '\n';
+            return;
+        }
+
         if (n <= 0) {
             cout << "No installments available.\n";
             cout << string(70, '=') << '\n';
@@ -151,6 +180,15 @@ public:
 
         double loanAmount = static_cast<double>(price - down);
         int n = installments;
+
+        // FIX: Check for non-positive loan amount
+        if (loanAmount <= 0) {
+            cout << "NO INSTALLMENT PLAN - FULL PAYMENT COMPLETE\n";
+            cout << "Down payment covers the entire amount. No financing required.\n";
+            cout << string(80, '=') << '\n';
+            return;
+        }
+
         if (n <= 0) {
             cout << "No installments available.\n";
             cout << string(80, '=') << '\n';
@@ -353,6 +391,10 @@ public:
         interestRate(interestRate),
         processingFee(processingFee)
     {
+        // FIX: Additional validation for personal loan
+        if (down > price) {
+            setDownPayment(price); // Use setter to ensure proper recalculation
+        }
     }
 
     // Copy constructor
@@ -381,8 +423,14 @@ public:
     void print() const override {
         cout << "PersonalLoan:\n";
         cout << "  Loan Type: " << loanType << '\n';
-        cout << "  Loan Amount: " << getPrice() << '\n';
+        cout << "  Total Price: " << getPrice() << '\n';  // FIX: Changed label
         cout << "  Down payment: " << getDownPayment() << '\n';
+
+        // FIX: Calculate and display non-negative financed amount
+        int financed = getPrice() - getDownPayment();
+        if (financed < 0) financed = 0;
+        cout << "  Amount Financed: " << financed << '\n';
+
         cout << "  Installments: " << getInstallments() << '\n';
         cout << "  Max Amount: " << maxAmount << '\n';
         cout << "  Annual Interest Rate: " << fixed << setprecision(2) << interestRate << "%\n";
@@ -390,11 +438,26 @@ public:
     }
 
     // OVERRIDE: Installment plan with interest calculation
-    void printInstallmentPlan() const override {
+    void printInstallmentPlan() const {
         print();
 
         double loanAmount = static_cast<double>(getPrice() - getDownPayment());
         int n = getInstallments();
+
+        // FIX: Enhanced validation for non-positive loan amount
+        if (loanAmount <= 0) {
+            cout << "\n" << string(80, '=') << '\n';
+            if (loanAmount < 0) {
+                cout << "INVALID LOAN - DOWN PAYMENT EXCEEDS PRICE\n";
+            }
+            else {
+                cout << "NO INSTALLMENT PLAN - FULL PAYMENT COMPLETE\n";
+            }
+            cout << string(80, '=') << '\n';
+            cout << "Down payment covers the entire amount. No financing required.\n";
+            cout << string(80, '=') << '\n';
+            return;
+        }
 
         if (n <= 0) {
             cout << "No installments available.\n";
@@ -476,7 +539,7 @@ public:
     }
 
     // OVERRIDE: Month-based plan with interest
-    void printInstallmentPlanStartingAt(int startMonth) const override {
+    void printInstallmentPlanStartingAt(int startMonth) const {
         static const string months[] = {
             "Jan", "Feb", "Mar", "Apr", "May", "Jun",
             "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
@@ -488,6 +551,21 @@ public:
 
         double loanAmount = static_cast<double>(getPrice() - getDownPayment());
         int n = getInstallments();
+
+        // FIX: Enhanced validation for non-positive loan amount
+        if (loanAmount <= 0) {
+            cout << "\n" << string(80, '=') << '\n';
+            if (loanAmount < 0) {
+                cout << "INVALID LOAN - DOWN PAYMENT EXCEEDS PRICE\n";
+            }
+            else {
+                cout << "NO INSTALLMENT PLAN - FULL PAYMENT COMPLETE\n";
+            }
+            cout << string(80, '=') << '\n';
+            cout << "Down payment covers the entire amount. No financing required.\n";
+            cout << string(80, '=') << '\n';
+            return;
+        }
 
         if (n <= 0) {
             cout << "No installments available.\n";
