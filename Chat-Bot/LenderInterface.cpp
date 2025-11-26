@@ -287,8 +287,8 @@ void runLenderInterface(const string& path = "applications.txt") {
     }
 }
 
-int main()
-{
-    runLenderInterface();
-    return 0;
-}
+//int main()
+//{
+//    runLenderInterface();
+//    return 0;
+//}

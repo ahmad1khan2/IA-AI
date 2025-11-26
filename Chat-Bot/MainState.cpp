@@ -11,7 +11,7 @@ MainState::MainState() {
 // Called when the user first enters this state
 void MainState::onEnter() {
     std::cout << "Chatbot: Welcome! You can ask about home loans (H), car loans (C), "
-        << "scooter loans (S), or check applications (Q)." << std::endl;
+        << "scooter loans (S), check applications (Q) or just chat (G)." << std::endl;
 }
 
 // Returns the prompt string for the main menu

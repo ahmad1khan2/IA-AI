@@ -45,6 +45,10 @@ void StateManager::handleInput(const string& input) {
         changeState(make_unique<CNICState>());
         return;
     }
+    else if (normalized == "G" || upperFull == "CHAT" || upperFull == "GENERAL") {
+        changeState(make_unique<GeneralChatState>());
+        return;
+    }
     else if (upperFull == "MAIN" || upperFull == "MENU" || upperFull == "EXIT" || upperFull == "A") {
         returnToMain();
         return;
