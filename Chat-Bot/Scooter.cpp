@@ -32,11 +32,28 @@ void ScooterLoanHandler::handleMainState(const string& input) {
             scooterLoanAttempt = 0;
         }
     }
+    else if (input == "menu") {
+        cout << "Chatbot: Returning to main menu..." << endl;
+        chatState = "main";
+    }
     else {
-        cout << "Chatbot: Type 'show' to see scooter options or 'menu' to return to main menu." << endl;
+        // Check if input is numeric (like "1234") and reject it
+        bool isNumeric = !input.empty();
+        for (char c : input) {
+            if (!isdigit(c)) {
+                isNumeric = false;
+                break;
+            }
+        }
+
+        if (isNumeric) {
+            cout << "Chatbot: Invalid input. Please type 'show' to see scooter options or 'menu' to return to main menu." << endl;
+        }
+        else {
+            cout << "Chatbot: Invalid command. Type 'show' to see scooter options or 'menu' to return to main menu." << endl;
+        }
     }
 }
-
 void ScooterLoanHandler::handleMakeState(const string& input) {
     if (input == "b") {
         cout << "Chatbot: Returning to main menu. Press S for scooter loan or X to exit." << endl;
@@ -96,7 +113,13 @@ void ScooterLoanHandler::handleApplyState(int loanIndex) {
     cout << "\n=== STARTING SCOOTER LOAN APPLICATION ===" << endl;
 
     Applicant applicant;
-    applicant.collectData();
+    try {
+        applicant.collectData();
+    }
+    catch (const ReturnToMainMenuException& e) {
+        // Re-throw to be caught by StateManager
+        throw;
+    }
 
     // Check if application was actually completed or just exited
     if (applicant.getStatus() == "Submitted") {
@@ -108,11 +131,21 @@ void ScooterLoanHandler::handleApplyState(int loanIndex) {
         string monthInput;
         getline(cin, monthInput);
 
+        // Validate month input
+        bool validMonth = false;
         try {
             int m = stoi(monthInput);
-            if (m > 0) startMonth = m;
+            if (m >= 1 && m <= 12) {
+                startMonth = m;
+                validMonth = true;
+            }
         }
         catch (...) {
+            // Invalid input, use default
+        }
+
+        if (!validMonth) {
+            cout << "Chatbot: Invalid month. Using default starting month 1." << endl;
             startMonth = 1;
         }
 
@@ -129,7 +162,6 @@ void ScooterLoanHandler::handleApplyState(int loanIndex) {
     cout << "\nChatbot: Press S for another scooter loan or C for car loan or H for home loan or Q to check Application with CNIC or X to exit." << endl;
     chatState = "main";
 }
-
 void ScooterLoanHandler::displayScooterMakes() {
     auto availableMakes = getAvailableMakes();
     cout << "Chatbot: Available scooter makes:" << endl;

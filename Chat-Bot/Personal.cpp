@@ -39,8 +39,26 @@ void PersonalLoanHandler::handleMainState(const string& input) {
             chatState = "personal_loan_select";
         }
     }
+    else if (input == "menu") {
+        cout << "Chatbot: Returning to main menu..." << endl;
+        chatState = "main";
+    }
     else {
-        cout << "Chatbot: Type 'show' to see personal loan options or 'menu' to return to main menu." << endl;
+        // Check if input is numeric (like "1234") and reject it
+        bool isNumeric = !input.empty();
+        for (char c : input) {
+            if (!isdigit(c)) {
+                isNumeric = false;
+                break;
+            }
+        }
+
+        if (isNumeric) {
+            cout << "Chatbot: Invalid input. Please type 'show' to see personal loan options or 'menu' to return to main menu." << endl;
+        }
+        else {
+            cout << "Chatbot: Invalid command. Type 'show' to see personal loan options or 'menu' to return to main menu." << endl;
+        }
     }
 }
 
@@ -181,7 +199,13 @@ void PersonalLoanHandler::handleApplyState(int selectedIndex, int userAmount) {
 
     // Start the actual application process like other loan types
     Applicant applicant;
-    applicant.collectData();
+    try {
+        applicant.collectData();
+    }
+    catch (const ReturnToMainMenuException& e) {
+        // Re-throw to be caught by StateManager
+        throw;
+    }
 
     // Check if application was actually completed or just exited
     if (applicant.getStatus() == "Submitted") {
@@ -194,6 +218,12 @@ void PersonalLoanHandler::handleApplyState(int selectedIndex, int userAmount) {
             string monthInput;
             getline(cin, monthInput);
 
+            // Check for exit command first
+            if (monthInput == "exit" || monthInput == "menu") {
+                cout << "Chatbot: Skipping installment plan display." << endl;
+                break;
+            }
+
             try {
                 monthInput.erase(remove(monthInput.begin(), monthInput.end(), ' '), monthInput.end());
 
@@ -205,6 +235,21 @@ void PersonalLoanHandler::handleApplyState(int selectedIndex, int userAmount) {
                 int m = stoi(monthInput);
                 if (m >= 1 && m <= 12) {
                     startMonth = m;
+
+                    // Create user-specific loan for month-based plan
+                    personalLoan userLoan(
+                        selectedLoan.getLoanType(),
+                        selectedLoan.getMaxAmount(),
+                        selectedLoan.getInterestRate(),
+                        selectedLoan.getProcessingFee(),
+                        selectedLoan.getInstallments(),
+                        userAmount,
+                        selectedLoan.getDownPayment()
+                    );
+
+                    // Show installment plan with months
+                    cout << "\n=== DETAILED INSTALLMENT PLAN FOR " << formatCurrency(userAmount) << " (STARTING AT MONTH " << startMonth << ") ===" << endl;
+                    userLoan.printInstallmentPlanStartingAt(startMonth);
                     break;
                 }
                 else {
@@ -215,21 +260,6 @@ void PersonalLoanHandler::handleApplyState(int selectedIndex, int userAmount) {
                 cout << "Error: Please enter a valid month number (1-12)." << endl;
             }
         }
-
-        // Create user-specific loan for month-based plan
-        personalLoan userLoan(
-            selectedLoan.getLoanType(),
-            selectedLoan.getMaxAmount(),
-            selectedLoan.getInterestRate(),
-            selectedLoan.getProcessingFee(),
-            selectedLoan.getInstallments(),
-            userAmount,
-            selectedLoan.getDownPayment()
-        );
-
-        // Show installment plan with months
-        cout << "\n=== DETAILED INSTALLMENT PLAN FOR " << formatCurrency(userAmount) << " (STARTING AT MONTH " << startMonth << ") ===" << endl;
-        userLoan.printInstallmentPlanStartingAt(startMonth);
     }
     else if (applicant.applicationId.empty()) {
         // Application not found - no message needed (already shown in resume)
@@ -242,7 +272,6 @@ void PersonalLoanHandler::handleApplyState(int selectedIndex, int userAmount) {
     cout << "\nChatbot: Press P for another personal loan or C for car loan or H for home loan or S for scooter loan or Q to check Application with CNIC or X to exit." << endl;
     chatState = "main";
 }
-
 void PersonalLoanHandler::displayInstallmentPlan(int selectedIndex) {
     int realIndex = currentOptionsLoanIndex[selectedIndex];
     const auto& loan = personalLoans[realIndex];

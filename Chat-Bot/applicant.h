@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <string>
+#include <exception>
 #include <vector>
 
 using namespace std;
@@ -84,11 +85,17 @@ public:
     //exit at any point
     void checkForExit(const string& input, const string& currentStatus);
     string getStatus() const { return status; }
+   
 private:
 
     void showApplicationSummary();
 };
-
+class ReturnToMainMenuException : public std::exception {
+public:
+    const char* what() const noexcept override {
+        return "Return to main menu";
+    }
+};
 // ============================
 // INPUT VALIDATION FUNCTIONS DECLARATIONS
 // ============================
