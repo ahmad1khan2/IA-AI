@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include "applicant.h"
 #include "loan.h"
 
 using namespace std;
@@ -38,6 +39,7 @@ public:
     static string generateApplicationId();
     static void countApplicationsByCNIC(const string& cnic);
     static bool isValidCNIC(const string& cnic);
+    static bool loadApplication(const string& appId, const string& cnic, Applicant& applicant); // for c1,c2,c3
 };
 
 #endif // FILEHANDLING_H

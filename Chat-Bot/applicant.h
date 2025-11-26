@@ -32,6 +32,8 @@ public:
 };
 
 class Applicant {
+private: 
+    bool isExiting = false;
 public:
     string applicationId;
     string fullName;
@@ -63,7 +65,25 @@ public:
     string salarySlipPath;
     void handleImageUpload();
     bool copyFile(const string& sourcePath, const string& destPath);
+    // Multi-session methods
+    void startNewApplication();
+    void resumeApplication();
+    void continueApplication();
+    void collectPersonalInfo();
+    void collectFinancialInfo();
+    void collectReferences();
+    void collectDocuments();
+    void saveCheckpoint(const string& checkpointStatus);
+    bool loadApplication(const string& appId, const string& cnicInput);
+    void showCurrentData();
 
+    // Validation methods
+    bool validatePersonalInfo();
+    bool validateFinancialInfo();
+    bool validateReferences();
+    //exit at any point
+    void checkForExit(const string& input, const string& currentStatus);
+    string getStatus() const { return status; }
 private:
 
     void showApplicationSummary();

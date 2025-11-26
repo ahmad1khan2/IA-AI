@@ -138,24 +138,27 @@ void HomeLoanHandler::handleApplyState(int selectedIndex) {
     Applicant applicant;
     applicant.collectData();
 
-    if (!applicant.applicationId.empty()) {
+    // Check if application was actually completed or just exited
+    if (applicant.getStatus() == "Submitted") {
         cout << "Chatbot: Application process completed. Press H for another home loan or X to exit." << endl;
+
+        // Only ask for installment plan if application was completed
+        int startMonth = 1;
+        cout << "Chatbot: Enter starting month for installment plan (1-12):";
+        string monthInput;
+        getline(cin, monthInput);
+        try {
+            int m = stoi(monthInput);
+            if (m > 0) startMonth = m;
+        }
+        catch (...) { startMonth = 1; }
+
+        displayInstallmentPlanWithMonths(selectedIndex, startMonth);
     }
     else {
-        cout << "Press H to try again or X to exit." << endl;
+        // Application was exited, not completed
+        cout << "Chatbot: Application saved." << endl;
     }
-    // Ask for starting month
-    int startMonth = 1;
-    cout << "Chatbot: Enter starting month for installment plan (1-12):";
-    string monthInput;
-    getline(cin, monthInput);
-    try {
-        int m = stoi(monthInput);
-        if (m > 0) startMonth = m;
-    }
-    catch (...) { startMonth = 1; }
-
-    displayInstallmentPlanWithMonths(selectedIndex, startMonth);
 
     cout << "\nChatbot: Press H for another home loan or C for car loan or S for scooter loan or Q to check Application with CNIC or X to exit." << endl;
     chatState = "main";
