@@ -105,9 +105,7 @@ void Applicant::resumeApplication() {
         showCurrentData();
         continueApplication();
     }
-    else {
-        cout << "Error: Application not found or already completed." << endl;
-    }
+    
 }
 
 void Applicant::continueApplication() {
@@ -779,7 +777,7 @@ void Applicant::checkForExit(const string& input, const string& currentStatus) {
         if (!isExiting) {
             isExiting = true;
             saveCheckpoint(currentStatus);
-            cout << "Application saved. You can resume later with AppID: " << applicationId << endl;
+            cout << "You can resume later with AppID: " << applicationId << endl;
             cout << "Returning to main menu..." << endl;
             throw runtime_error("exit_application");
         }

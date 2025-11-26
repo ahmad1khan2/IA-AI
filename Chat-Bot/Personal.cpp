@@ -181,11 +181,13 @@ void PersonalLoanHandler::handleApplyState(int selectedIndex, int userAmount) {
 
     // Start the actual application process like other loan types
     Applicant applicant;
-    applicant.collectData();  // This will collect all 4 sections of data
+    applicant.collectData();
 
-    // Only show installment plan if application was successful
-    if (!applicant.applicationId.empty()) {
-        // VALIDATION: Starting month input
+    // Check if application was actually completed or just exited
+    if (applicant.getStatus() == "Submitted") {
+        cout << "Chatbot: Application process completed. Press P for another Personal loan or X to exit." << endl;
+
+        // Only ask for installment plan if application was completed
         int startMonth = 1;
         while (true) {
             cout << "Chatbot: Enter starting month for installment plan (1-12): ";
@@ -228,13 +230,16 @@ void PersonalLoanHandler::handleApplyState(int selectedIndex, int userAmount) {
         // Show installment plan with months
         cout << "\n=== DETAILED INSTALLMENT PLAN FOR " << formatCurrency(userAmount) << " (STARTING AT MONTH " << startMonth << ") ===" << endl;
         userLoan.printInstallmentPlanStartingAt(startMonth);
-
-        cout << "\nChatbot: Application submitted successfully! Press P for another personal loan or X to exit." << endl;
+    }
+    else if (applicant.applicationId.empty()) {
+        // Application not found - no message needed (already shown in resume)
     }
     else {
-        cout << "Chatbot: Application was not completed. Press P to try again or X to exit." << endl;
+        // Application was exited, not completed
+        cout << "Chatbot: Application saved." << endl;
     }
 
+    cout << "\nChatbot: Press P for another personal loan or C for car loan or H for home loan or S for scooter loan or Q to check Application with CNIC or X to exit." << endl;
     chatState = "main";
 }
 

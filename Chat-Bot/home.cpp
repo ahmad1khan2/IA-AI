@@ -155,6 +155,9 @@ void HomeLoanHandler::handleApplyState(int selectedIndex) {
 
         displayInstallmentPlanWithMonths(selectedIndex, startMonth);
     }
+    else if (applicant.applicationId.empty()) {
+        // Application not found - no message needed (already shown in resume)
+    }
     else {
         // Application was exited, not completed
         cout << "Chatbot: Application saved." << endl;
